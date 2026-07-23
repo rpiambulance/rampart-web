@@ -1,12 +1,16 @@
 import Link from 'next/link';
 import { auth, signIn, signOut } from '@/auth';
 import { api } from '@/lib/api';
-import { AppSidebar } from '@/components/app-sidebar';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { TopNavMenus } from '@/components/top-nav-menus';
 import { Button } from '@/components/ui/button';
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { filterNavGroups } from '@/lib/nav';
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { filterNavGroups, hasConsoleAccess } from '@/lib/nav';
 
 function SignOutButton({ name }: { name: string }) {
   return (
@@ -40,11 +44,29 @@ function SignInButton() {
 
 const MAIN = 'flex-1 container mx-auto max-w-6xl px-4 py-6';
 
+function Header({ right }: { right: React.ReactNode }) {
+  return (
+    <>
+      <div aria-hidden className="h-1 bg-primary" />
+      <header className="border-b bg-background">
+        <div className="container mx-auto max-w-6xl px-4 h-14 flex items-center gap-4">
+          <Link
+            href="/"
+            className="font-heading font-semibold tracking-tight text-primary"
+          >
+            Rampart Admin
+          </Link>
+          {right}
+        </div>
+      </header>
+    </>
+  );
+}
+
 /**
- * Chooses the navigation chrome per the member's saved preference
- * (Member.navLayout): sidebar (default) or a grouped top navbar.
- * Unauthenticated visitors (incl. the public /coverage pages) get a
- * minimal header.
+ * Admin-console chrome: fixed top navbar. Entry requires at least one
+ * console permission (tokens/roles/settings/vehicles/audit) — everyone
+ * else gets an access-denied screen. The member portal lives in `central`.
  */
 export async function NavShell({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -52,78 +74,69 @@ export async function NavShell({ children }: { children: React.ReactNode }) {
   if (!session?.user) {
     return (
       <div className="min-h-full flex flex-col">
-        <div aria-hidden className="h-1 bg-primary" />
-        <header className="border-b bg-background">
-          <div className="container mx-auto max-w-6xl px-4 h-14 flex items-center gap-4">
-            <Link
-              href="/"
-              className="font-heading font-semibold tracking-tight text-primary"
-            >
-              RPI Ambulance
-            </Link>
+        <Header
+          right={
             <div className="ml-auto flex items-center gap-1">
               <ThemeToggle />
               <SignInButton />
             </div>
-          </div>
-        </header>
+          }
+        />
         <main className={MAIN}>{children}</main>
       </div>
     );
   }
 
-  let navLayout = 'sidebar';
   let permissions = new Set<string>();
   try {
-    const me = await api<{ navLayout?: string; permissions?: string[] }>(
-      '/v1/members/me',
-    );
-    if (me?.navLayout) navLayout = me.navLayout;
+    const me = await api<{ permissions?: string[] }>('/v1/members/me');
     permissions = new Set(me?.permissions ?? []);
   } catch {
-    // inactive/unlinked members fall back to the default chrome
+    // unlinked/inactive members: no permissions -> denied below
   }
-  const groups = filterNavGroups(permissions);
   const name = session.user.name ?? '';
 
-  if (navLayout === 'topnav') {
+  if (!hasConsoleAccess(permissions)) {
     return (
       <div className="min-h-full flex flex-col">
-        <div aria-hidden className="h-1 bg-primary" />
-        <header className="border-b bg-background">
-          <div className="container mx-auto max-w-6xl px-4 h-14 flex items-center gap-4">
-            <Link
-              href="/"
-              className="font-heading font-semibold tracking-tight text-primary"
-            >
-              RPI Ambulance
-            </Link>
-            <TopNavMenus groups={groups} />
+        <Header
+          right={
             <div className="ml-auto flex items-center gap-1">
               <ThemeToggle />
               <SignOutButton name={name} />
             </div>
-          </div>
-        </header>
-        <main className={MAIN}>{children}</main>
+          }
+        />
+        <main className={MAIN}>
+          <Card className="mx-auto mt-12 max-w-md">
+            <CardHeader>
+              <CardTitle>Administrators only</CardTitle>
+              <CardDescription>
+                This console is for system administration. The member portal
+                is at the main members site. If you believe you need access
+                here, contact an administrator.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </main>
       </div>
     );
   }
 
   return (
-    <SidebarProvider>
-      <AppSidebar groups={groups} />
-      <SidebarInset>
-        <div aria-hidden className="h-1 bg-primary" />
-        <header className="flex h-13 items-center gap-2 border-b px-4">
-          <SidebarTrigger />
-          <div className="ml-auto flex items-center gap-1">
-            <ThemeToggle />
-            <SignOutButton name={name} />
-          </div>
-        </header>
-        <main className={MAIN}>{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
+    <div className="min-h-full flex flex-col">
+      <Header
+        right={
+          <>
+            <TopNavMenus groups={filterNavGroups(permissions)} />
+            <div className="ml-auto flex items-center gap-1">
+              <ThemeToggle />
+              <SignOutButton name={name} />
+            </div>
+          </>
+        }
+      />
+      <main className={MAIN}>{children}</main>
+    </div>
   );
 }

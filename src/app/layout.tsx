@@ -24,8 +24,8 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: 'RPI Ambulance Members',
-  description: 'RPI Ambulance member portal',
+  title: 'Rampart Admin',
+  description: 'RPI Ambulance platform administration console',
 };
 
 export default function RootLayout({

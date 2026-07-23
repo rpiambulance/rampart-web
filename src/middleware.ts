@@ -1,9 +1,6 @@
 export { auth as middleware } from '@/auth';
 
 export const config = {
-  // Everything is members-only except auth routes, static assets, and the
-  // public coverage-request pages (outside requesters have no account).
-  matcher: [
-    '/((?!api/auth|coverage|_next/static|_next/image|favicon.ico).*)',
-  ],
+  // The console is members-only everywhere except auth routes and assets.
+  matcher: ['/((?!api/auth|_next/static|_next/image|favicon.ico).*)'],
 };
