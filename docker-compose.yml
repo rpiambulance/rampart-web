@@ -1,6 +1,14 @@
-# Rampart Admin console — joins the running `central` stack's network.
-# Bring up the full platform from ../central first (docker compose up -d),
-# then: docker compose up -d --build
+# Rampart Admin console — standalone. Builds and runs with no dependency on
+# the central repo or its compose project.
+#
+# By default it reaches the API and Keycloak through the host (host-gateway),
+# so it works against a locally running central stack (published ports 3001 /
+# 8080) or anything else you point the env vars at:
+#
+#   docker compose up -d --build                       # local, next to the central stack
+#   RAMPART_API_URL=https://api.example.com \
+#   AUTH_KEYCLOAK_ISSUER=https://kc.example.com/realms/rampart \
+#     docker compose up -d --build                     # remote API/Keycloak
 services:
   admin:
     build: .
@@ -12,12 +20,14 @@ services:
       AUTH_TRUST_HOST: 'true'
       AUTH_KEYCLOAK_ID: ${AUTH_KEYCLOAK_ID:-rampart-admin}
       AUTH_KEYCLOAK_SECRET: ${AUTH_KEYCLOAK_SECRET:-dev-secret-admin}
+      # Default matches the dev realm's pinned issuer; the `keycloak` host
+      # resolves to the host machine via extra_hosts below.
       AUTH_KEYCLOAK_ISSUER: ${AUTH_KEYCLOAK_ISSUER:-http://keycloak:8080/realms/rampart}
       AUTH_DEV_LOGIN: ${AUTH_DEV_LOGIN:-true}
-      RAMPART_API_URL: http://api:3001
-    networks:
-      - central
-networks:
-  central:
-    external: true
-    name: central_default
+      RAMPART_API_URL: ${RAMPART_API_URL:-http://api:3001}
+    extra_hosts:
+      # Resolve the dev-stack hostnames to the host machine so the console
+      # can use the central stack's published ports without joining its
+      # compose network. Harmless when env vars point elsewhere.
+      - 'keycloak:host-gateway'
+      - 'api:host-gateway'

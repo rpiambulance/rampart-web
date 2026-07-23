@@ -1,6 +1,6 @@
-# Rampart Web
+# Rampart Admin Console
 
-The RPI Ambulance member portal frontend (members.rpiambulance.com). Next.js (App Router) + Tailwind + shadcn/ui. All data comes from the `rampart-api` service; this app holds no database.
+System-administration console for the RPI Ambulance platform: service API tokens, roles & permissions, app settings, fleet vehicles, and the audit log. Next.js (App Router) + Tailwind + shadcn/ui; all data comes from `rampart-api`. The member portal (scheduling, events, training, personnel) is the separate `central` app. Entry requires at least one console permission.
 
 **Spec:** `docs/modernization-spec.md` in the legacy `website` repo.
 
