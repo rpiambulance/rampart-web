@@ -110,6 +110,17 @@ export async function NavShell({ children }: { children: React.ReactNode }) {
           'sign in once with a verified email that matches a member.';
       } else if (code === 'INACTIVE_MEMBER') {
         diagnostic = 'Your membership is marked inactive.';
+      } else if (error.status === 401) {
+        // Token rejected before any member lookup: surface the API's own
+        // message, which distinguishes a missing header from a token whose
+        // issuer/audience/signature the API won't accept.
+        const message =
+          (error.body as { message?: string } | null)?.message ?? 'no detail';
+        diagnostic =
+          `The API rejected the login token (401: ${message}). Usually the ` +
+          "API's KEYCLOAK_ISSUER does not match the token's issuer, or " +
+          'KEYCLOAK_AUDIENCE is set but the Keycloak client has no matching ' +
+          'audience mapper.';
       } else {
         diagnostic = `The API rejected this account (HTTP ${error.status}).`;
       }
