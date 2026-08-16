@@ -10,15 +10,33 @@ import {
 } from '@/components/ui/card';
 import { ErrorBanner } from '@/components/error-banner';
 import { PageHeader } from '@/components/page-header';
-import { startMigration } from './actions';
+import { resolveConflict, startMigration } from './actions';
+
+type ConflictOption = {
+  action: 'link' | 'replace' | 'skip';
+  label: string;
+  description: string;
+  suggestion?: string;
+};
+
+type MigrationConflict = {
+  id: string;
+  entity: string;
+  label: string;
+  fields: string[];
+  values: Record<string, string>;
+  existing?: { id: number; summary: string };
+  options: ConflictOption[];
+};
 
 type RunState = {
-  status: 'idle' | 'running' | 'succeeded' | 'failed';
+  status: 'idle' | 'running' | 'awaiting-input' | 'succeeded' | 'failed';
   startedAt?: string;
   finishedAt?: string;
   startedBy?: string;
   progress: string[];
   error?: string;
+  pendingConflict?: MigrationConflict;
 };
 
 // Always read fresh status, never a cached render.
@@ -41,9 +59,88 @@ function NoAccess() {
 const STATUS_BADGE: Record<RunState['status'], React.ReactNode> = {
   idle: <Badge variant="secondary">Not started</Badge>,
   running: <Badge>Running…</Badge>,
+  'awaiting-input': <Badge variant="secondary">Needs your input</Badge>,
   succeeded: <Badge>Succeeded</Badge>,
   failed: <Badge variant="destructive">Failed</Badge>,
 };
+
+/**
+ * The import pauses here whenever legacy data collides with a uniqueness
+ * constraint. It never guesses — one question at a time until it's answered.
+ */
+function ConflictPrompt({ conflict }: { conflict: MigrationConflict }) {
+  const fieldList = conflict.fields.join(', ');
+  return (
+    <Card className="border-primary">
+      <CardHeader>
+        <CardTitle className="text-base">
+          The import needs a decision
+        </CardTitle>
+        <CardDescription>
+          <span className="font-medium">{conflict.label}</span> can&apos;t be
+          imported because its {fieldList} is already in use. The import is
+          paused until you choose.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <dl className="rounded-md bg-muted p-3 text-sm">
+          {Object.entries(conflict.values).map(([field, value]) => (
+            <div key={field} className="flex gap-2">
+              <dt className="font-medium">{field}:</dt>
+              <dd className="font-mono">{value || '(blank)'}</dd>
+            </div>
+          ))}
+          {conflict.existing ? (
+            <div className="mt-2 flex gap-2 border-t pt-2">
+              <dt className="font-medium">already used by:</dt>
+              <dd>
+                #{conflict.existing.id} {conflict.existing.summary}
+              </dd>
+            </div>
+          ) : null}
+        </dl>
+
+        <div className="space-y-3">
+          {conflict.options.map((option) => (
+            <form
+              key={option.action}
+              action={resolveConflict}
+              className="rounded-md border p-3"
+            >
+              <input type="hidden" name="conflictId" value={conflict.id} />
+              <input type="hidden" name="action" value={option.action} />
+              <p className="text-sm font-medium">{option.label}</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {option.description}
+              </p>
+              {option.action === 'replace' ? (
+                <input
+                  name="value"
+                  defaultValue={option.suggestion ?? ''}
+                  placeholder={`New ${conflict.fields[0]}`}
+                  autoComplete="off"
+                  className="mt-2 w-full rounded-md border bg-transparent px-3 py-1.5 font-mono text-sm"
+                />
+              ) : null}
+              <Button
+                type="submit"
+                size="sm"
+                variant={option.action === 'skip' ? 'outline' : 'default'}
+                className="mt-2"
+              >
+                {option.action === 'link'
+                  ? 'Use existing record'
+                  : option.action === 'replace'
+                    ? `Import with this ${conflict.fields[0]}`
+                    : 'Skip'}
+              </Button>
+            </form>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default async function LegacyMigrationPage({
   searchParams,
@@ -59,7 +156,7 @@ export default async function LegacyMigrationPage({
     throw err;
   }
 
-  const running = state.status === 'running';
+  const running = state.status === 'running' || state.status === 'awaiting-input';
 
   return (
     <div className="space-y-6">
@@ -68,6 +165,13 @@ export default async function LegacyMigrationPage({
         description="One-shot import from the old MySQL portal (members, credentials, certifications, crews, games/events, fuel and radio logs)."
       />
       <ErrorBanner message={error} />
+
+      {state.status === 'awaiting-input' && state.pendingConflict ? (
+        <ConflictPrompt
+          key={state.pendingConflict.id}
+          conflict={state.pendingConflict}
+        />
+      ) : null}
 
       <Card>
         <CardHeader>
@@ -100,7 +204,7 @@ export default async function LegacyMigrationPage({
           {running ? (
             <p className="text-sm text-muted-foreground">
               The import runs in the background. Reload this page to refresh
-              progress.
+              progress — and to see any question it&apos;s waiting on.
             </p>
           ) : null}
           <Button
@@ -119,7 +223,9 @@ export default async function LegacyMigrationPage({
           <CardDescription>
             Safe to re-run: every row is matched on its legacy id and updated
             rather than duplicated. The API must be able to reach the MySQL
-            host. The password is never written to the audit log.
+            host. The password is never written to the audit log. Where legacy
+            data collides with a uniqueness rule, the import pauses and asks you
+            what to do rather than guessing.
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -22,3 +22,26 @@ export async function startMigration(formData: FormData) {
   }
   revalidatePath('/admin/legacy-migration');
 }
+
+export async function resolveConflict(formData: FormData) {
+  const action = String(formData.get('action') ?? '');
+  try {
+    await api('/v1/admin/legacy-migration/resolve', {
+      method: 'POST',
+      body: JSON.stringify({
+        conflictId: String(formData.get('conflictId') ?? ''),
+        action,
+        // Only meaningful for `replace`; blank clears a nullable field.
+        value: action === 'replace' ? String(formData.get('value') ?? '') : undefined,
+      }),
+    });
+  } catch (error) {
+    if (error instanceof ApiError) {
+      redirect(
+        `/admin/legacy-migration?error=${encodeURIComponent(apiErrorMessage(error))}`,
+      );
+    }
+    throw error;
+  }
+  revalidatePath('/admin/legacy-migration');
+}
