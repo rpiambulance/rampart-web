@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { auth, signIn, signOut } from '@/auth';
-import { api } from '@/lib/api';
+import { api, ApiError } from '@/lib/api';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { TopNavMenus } from '@/components/top-nav-menus';
 import { Button } from '@/components/ui/button';
@@ -88,11 +88,36 @@ export async function NavShell({ children }: { children: React.ReactNode }) {
   }
 
   let permissions = new Set<string>();
+  // Capture *why* access failed — otherwise several very different problems
+  // (unlinked account, inactive member, unreachable or outdated API) all
+  // render the same blank denial screen and are impossible to tell apart.
+  let diagnostic: string | undefined;
   try {
     const me = await api<{ permissions?: string[] }>('/v1/members/me');
+    if (!Array.isArray(me?.permissions)) {
+      diagnostic =
+        'The API did not return a permission list. It is probably running a ' +
+        'build older than the console — redeploy the API.';
+    }
     permissions = new Set(me?.permissions ?? []);
-  } catch {
-    // unlinked/inactive members: no permissions -> denied below
+  } catch (error) {
+    if (error instanceof ApiError) {
+      const code = (error.body as { code?: string } | null)?.code;
+      if (code === 'NO_MEMBER_RECORD') {
+        diagnostic =
+          'Your Keycloak account is not linked to a member record. An ' +
+          'administrator must link it (Member.keycloakSubject), or you must ' +
+          'sign in once with a verified email that matches a member.';
+      } else if (code === 'INACTIVE_MEMBER') {
+        diagnostic = 'Your membership is marked inactive.';
+      } else {
+        diagnostic = `The API rejected this account (HTTP ${error.status}).`;
+      }
+    } else {
+      diagnostic =
+        'The console could not reach the API. Check RAMPART_API_URL and that ' +
+        'the API is running.';
+    }
   }
   const name = session.user.name ?? '';
 
@@ -116,6 +141,18 @@ export async function NavShell({ children }: { children: React.ReactNode }) {
                 is at the main members site. If you believe you need access
                 here, contact an administrator.
               </CardDescription>
+              {diagnostic ? (
+                <p className="mt-3 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+                  <span className="font-medium">Details: </span>
+                  {diagnostic}
+                </p>
+              ) : (
+                <p className="mt-3 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+                  <span className="font-medium">Details: </span>
+                  Your account is linked and active, but holds no
+                  administrative permission.
+                </p>
+              )}
             </CardHeader>
           </Card>
         </main>
