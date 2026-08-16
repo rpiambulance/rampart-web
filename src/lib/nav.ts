@@ -19,6 +19,7 @@ export interface NavGroup {
 }
 
 export const CONSOLE_PERMISSIONS = [
+  'system:migrate-legacy',
   'tokens:manage',
   'roles:manage',
   'settings:write',
@@ -41,6 +42,11 @@ export const NAV_GROUPS: NavGroup[] = [
       },
       { href: '/admin/vehicles', label: 'Vehicles', permissions: ['vehicles:manage'] },
       { href: '/admin/audit', label: 'Audit Log', permissions: ['audit:read'] },
+      {
+        href: '/admin/legacy-migration',
+        label: 'Legacy Migration',
+        permissions: ['system:migrate-legacy'],
+      },
     ],
   },
 ];

@@ -32,6 +32,7 @@ export const PERMISSION_INFO: Record<string, string> = {
   'tokens:manage': 'Create and revoke API tokens',
   'audit:read': 'Read the audit log',
   'integrations:manage': 'Manage external integrations',
+  'system:migrate-legacy': 'Run the one-shot import from the legacy MySQL portal',
 };
 
 const GROUP_LABELS: Array<[prefix: string, label: string]> = [
@@ -51,6 +52,7 @@ const GROUP_LABELS: Array<[prefix: string, label: string]> = [
   ['tokens:', 'Administration'],
   ['audit:', 'Administration'],
   ['integrations:', 'Administration'],
+  ['system:', 'Administration'],
 ];
 
 export function permissionGroup(permission: string): string {
