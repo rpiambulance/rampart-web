@@ -224,6 +224,7 @@ export async function saveEmailSettings(formData: FormData) {
         // Omitted entirely when left blank, which keeps the stored password.
         ...(pass ? { pass } : {}),
         from: String(formData.get('from') ?? '').trim(),
+        ehloName: String(formData.get('ehloName') ?? '').trim(),
       }),
     });
   } catch (error) {
@@ -234,9 +235,9 @@ export async function saveEmailSettings(formData: FormData) {
 
 export async function sendTestEmail(formData: FormData) {
   const to = String(formData.get('to') ?? '').trim();
-  let result: { ok: boolean; detail?: string };
+  let result: { ok: boolean; detail?: string; hint?: string };
   try {
-    result = await api<{ ok: boolean; detail?: string }>(
+    result = await api<{ ok: boolean; detail?: string; hint?: string }>(
       '/v1/settings/email/test',
       { method: 'POST', body: JSON.stringify({ to }) },
     );
@@ -249,6 +250,7 @@ export async function sendTestEmail(formData: FormData) {
     testTo: to,
     testOk: String(result.ok),
     ...(result.detail ? { testDetail: result.detail } : {}),
+    ...(result.hint ? { testHint: result.hint } : {}),
   });
   redirect(`/admin/settings?${params}`);
 }

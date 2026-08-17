@@ -19,6 +19,7 @@ export type EmailSettings = {
   user?: string | null;
   from?: string;
   hasPassword?: boolean;
+  ehloName?: string | null;
 };
 
 const FIELD = 'h-8 rounded-md border border-input bg-background px-2 text-sm';
@@ -35,7 +36,7 @@ export function EmailCard({
   testResult,
 }: {
   settings: EmailSettings;
-  testResult?: { ok: boolean; detail?: string; to?: string };
+  testResult?: { ok: boolean; detail?: string; hint?: string; to?: string };
 }) {
   const [secure, setSecure] = useState(settings.secure ?? false);
 
@@ -46,7 +47,8 @@ export function EmailCard({
         <CardDescription>
           Used for coverage confirmations, approvals and follow-ups, and member
           notifications. Until this is set, messages are written to the API log
-          instead of being sent.
+          instead of being sent. Gmail wants port 587 with implicit TLS off, an
+          app password, and an EHLO name that is a domain you own.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -120,6 +122,15 @@ export function EmailCard({
               className={`${FIELD} w-80`}
             />
           </label>
+          <label className="grid gap-1 text-xs text-muted-foreground">
+            EHLO name (optional)
+            <input
+              name="ehloName"
+              defaultValue={settings.ehloName ?? ''}
+              placeholder="rpiambulance.com"
+              className={`${FIELD} w-56`}
+            />
+          </label>
           <Button type="submit" size="sm">
             Save
           </Button>
@@ -153,6 +164,11 @@ export function EmailCard({
               {testResult.ok
                 ? `Sent to ${testResult.to}. If it does not arrive, check the spam folder and the From address.`
                 : `Could not send: ${testResult.detail}`}
+              {testResult.hint ? (
+                <span className="mt-1 block font-normal opacity-90">
+                  {testResult.hint}
+                </span>
+              ) : null}
             </p>
           ) : null}
         </div>

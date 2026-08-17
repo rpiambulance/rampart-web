@@ -625,11 +625,12 @@ export default async function AdminSettingsPage({
     testTo?: string;
     testOk?: string;
     testDetail?: string;
+    testHint?: string;
   }>;
 }) {
-  const { error, testTo, testOk, testDetail } = await searchParams;
+  const { error, testTo, testOk, testDetail, testHint } = await searchParams;
   const testResult = testTo
-    ? { ok: testOk === 'true', detail: testDetail, to: testTo }
+    ? { ok: testOk === 'true', detail: testDetail, hint: testHint, to: testTo }
     : undefined;
 
   let knobs: SchedulingKnobs;
