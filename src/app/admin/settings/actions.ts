@@ -254,3 +254,26 @@ export async function sendTestEmail(formData: FormData) {
   });
   redirect(`/admin/settings?${params}`);
 }
+
+export async function saveNotificationChannels(formData: FormData) {
+  // Checkboxes only submit when ticked, so build from the names present.
+  const channels: Record<string, { email: boolean; slack: boolean }> = {};
+  const ensure = (key: string) =>
+    (channels[key] ??= { email: false, slack: false });
+  for (const [field] of formData.entries()) {
+    const [channel, ...rest] = field.split(':');
+    const key = rest.join(':');
+    if (!key) continue;
+    if (channel === 'email') ensure(key).email = true;
+    else if (channel === 'slack') ensure(key).slack = true;
+  }
+  try {
+    await api('/v1/settings/notifications', {
+      method: 'PUT',
+      body: JSON.stringify({ channels }),
+    });
+  } catch (error) {
+    fail(error);
+  }
+  revalidatePath('/admin/settings');
+}

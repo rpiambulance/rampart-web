@@ -20,6 +20,10 @@ import {
 import { ErrorBanner } from '@/components/error-banner';
 import { PageHeader } from '@/components/page-header';
 import { EmailCard, type EmailSettings } from './email-card';
+import {
+  NotificationsCard,
+  type MessageTypeSetting,
+} from './notifications-card';
 import { CertLadder } from './cert-ladder';
 import {
   addRequirement,
@@ -28,6 +32,7 @@ import {
   deactivateCertificationType,
   deactivateEventKind,
   removeRequirement,
+  saveNotificationChannels,
   setCredentialRoles,
   updateDayOfUnlockTime,
   updateDropDeadline,
@@ -641,6 +646,7 @@ export default async function AdminSettingsPage({
   let classes: TrainingClass[];
   let roles: RoleOption[];
   let emailSettings: EmailSettings = { configured: false };
+  let messageTypes: MessageTypeSetting[] = [];
   try {
     [knobs, certTypes, kinds, credentialTypes, evalTemplates, classes, roles] =
       await Promise.all([
@@ -652,7 +658,10 @@ export default async function AdminSettingsPage({
         api<TrainingClass[]>('/v1/trainings/classes'),
         api<RoleOption[]>('/v1/roles'),
       ]);
-    emailSettings = await api<EmailSettings>('/v1/settings/email');
+    [emailSettings, messageTypes] = await Promise.all([
+      api<EmailSettings>('/v1/settings/email'),
+      api<MessageTypeSetting[]>('/v1/settings/notifications'),
+    ]);
   } catch (err) {
     if (err instanceof ApiError && err.status === 403) return <NoAccess />;
     throw err;
@@ -667,6 +676,7 @@ export default async function AdminSettingsPage({
       <ErrorBanner message={error} />
 
       <EmailCard settings={emailSettings} testResult={testResult} />
+      <NotificationsCard types={messageTypes} />
       <SchedulingCard knobs={knobs} />
       <CertTypesCard types={certTypes} />
       <CertLaddersCard types={certTypes} />
