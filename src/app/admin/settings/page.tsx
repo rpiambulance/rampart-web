@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/table';
 import { ErrorBanner } from '@/components/error-banner';
 import { PageHeader } from '@/components/page-header';
+import { EmailCard, type EmailSettings } from './email-card';
 import { CertLadder } from './cert-ladder';
 import {
   addRequirement,
@@ -619,9 +620,17 @@ function RequirementsCard({
 export default async function AdminSettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    testTo?: string;
+    testOk?: string;
+    testDetail?: string;
+  }>;
 }) {
-  const { error } = await searchParams;
+  const { error, testTo, testOk, testDetail } = await searchParams;
+  const testResult = testTo
+    ? { ok: testOk === 'true', detail: testDetail, to: testTo }
+    : undefined;
 
   let knobs: SchedulingKnobs;
   let certTypes: CertType[];
@@ -630,6 +639,7 @@ export default async function AdminSettingsPage({
   let evalTemplates: EvalTemplate[];
   let classes: TrainingClass[];
   let roles: RoleOption[];
+  let emailSettings: EmailSettings = { configured: false };
   try {
     [knobs, certTypes, kinds, credentialTypes, evalTemplates, classes, roles] =
       await Promise.all([
@@ -641,6 +651,7 @@ export default async function AdminSettingsPage({
         api<TrainingClass[]>('/v1/trainings/classes'),
         api<RoleOption[]>('/v1/roles'),
       ]);
+    emailSettings = await api<EmailSettings>('/v1/settings/email');
   } catch (err) {
     if (err instanceof ApiError && err.status === 403) return <NoAccess />;
     throw err;
@@ -654,6 +665,7 @@ export default async function AdminSettingsPage({
       />
       <ErrorBanner message={error} />
 
+      <EmailCard settings={emailSettings} testResult={testResult} />
       <SchedulingCard knobs={knobs} />
       <CertTypesCard types={certTypes} />
       <CertLaddersCard types={certTypes} />

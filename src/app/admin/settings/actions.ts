@@ -207,3 +207,48 @@ export async function saveCertificationLadder(formData: FormData) {
   }
   revalidatePath('/admin/settings');
 }
+
+// ---- email ----
+
+export async function saveEmailSettings(formData: FormData) {
+  const pass = String(formData.get('pass') ?? '');
+  const user = String(formData.get('user') ?? '').trim();
+  try {
+    await api('/v1/settings/email', {
+      method: 'PUT',
+      body: JSON.stringify({
+        host: String(formData.get('host') ?? '').trim(),
+        port: Number(formData.get('port')) || 587,
+        secure: formData.get('secure') === 'on',
+        ...(user ? { user } : {}),
+        // Omitted entirely when left blank, which keeps the stored password.
+        ...(pass ? { pass } : {}),
+        from: String(formData.get('from') ?? '').trim(),
+      }),
+    });
+  } catch (error) {
+    fail(error);
+  }
+  revalidatePath('/admin/settings');
+}
+
+export async function sendTestEmail(formData: FormData) {
+  const to = String(formData.get('to') ?? '').trim();
+  let result: { ok: boolean; detail?: string };
+  try {
+    result = await api<{ ok: boolean; detail?: string }>(
+      '/v1/settings/email/test',
+      { method: 'POST', body: JSON.stringify({ to }) },
+    );
+  } catch (error) {
+    fail(error);
+    return;
+  }
+  // Carried back on the URL so the outcome survives the redirect.
+  const params = new URLSearchParams({
+    testTo: to,
+    testOk: String(result.ok),
+    ...(result.detail ? { testDetail: result.detail } : {}),
+  });
+  redirect(`/admin/settings?${params}`);
+}
