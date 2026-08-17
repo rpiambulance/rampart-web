@@ -189,3 +189,21 @@ export async function setCertificationSupersedes(
   }
   revalidatePath('/admin/settings');
 }
+
+export async function saveCertificationLadder(formData: FormData) {
+  const typeIds = formData
+    .getAll('typeIds')
+    .map((value) => Number(value))
+    .filter((id) => Number.isFinite(id));
+  const unlink = formData.get('unlink') === 'true';
+  if (!typeIds.length) return;
+  try {
+    await api('/v1/certifications/ladder', {
+      method: 'PUT',
+      body: JSON.stringify({ typeIds, unlink }),
+    });
+  } catch (error) {
+    fail(error);
+  }
+  revalidatePath('/admin/settings');
+}

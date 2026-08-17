@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/table';
 import { ErrorBanner } from '@/components/error-banner';
 import { PageHeader } from '@/components/page-header';
+import { CertLadder } from './cert-ladder';
 import {
   addRequirement,
   createCertificationType,
@@ -26,7 +27,6 @@ import {
   deactivateCertificationType,
   deactivateEventKind,
   removeRequirement,
-  setCertificationSupersedes,
   setCredentialRoles,
   updateDayOfUnlockTime,
   updateDropDeadline,
@@ -383,73 +383,64 @@ function CertTypesCard({ types }: { types: CertType[] }) {
 }
 
 /**
- * Which certifications outrank which. Holding a higher one satisfies any
- * requirement for those beneath it, so a Paramedic answers for EMT without
- * anyone recording an EMT they do not hold.
+ * Certification ladders. Each is a chain from the highest certification down
+ * to the lowest, so a Paramedic satisfies an EMT requirement without anyone
+ * pairing every certification with every other.
  */
-function CertHierarchyCard({ types }: { types: CertType[] }) {
+function CertLaddersCard({ types }: { types: CertType[] }) {
+  const edges = types.flatMap((type) =>
+    (type.supersedes ?? []).map((s) => ({
+      higher: type.id,
+      lower: s.lowerTypeId,
+    })),
+  );
+  const below = new Map(edges.map((e) => [e.higher, e.lower]));
+  const hasAbove = new Set(edges.map((e) => e.lower));
+
+  // Walk each chain from its top down; anything ranked has exactly one step.
+  const ladders: number[][] = [];
+  const seen = new Set<number>();
+  for (const type of types) {
+    if (hasAbove.has(type.id) || !below.has(type.id)) continue;
+    const chain: number[] = [];
+    let cursor: number | undefined = type.id;
+    while (cursor !== undefined && !seen.has(cursor)) {
+      chain.push(cursor);
+      seen.add(cursor);
+      cursor = below.get(cursor);
+    }
+    ladders.push(chain);
+  }
+  const unranked = types.filter((type) => !seen.has(type.id));
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Certification ranking</CardTitle>
+        <CardTitle className="text-base">Certification ladders</CardTitle>
         <CardDescription>
-          Tick the certifications each one outranks. Ranking is followed all the
-          way down, so Paramedic over AEMT over EMT means a Paramedic satisfies
-          an EMT requirement — you only need to set the step directly beneath.
+          Order a ladder from the highest certification down. Ranking carries
+          all the way down, so Paramedic over AEMT over EMT means a Paramedic
+          satisfies an EMT requirement — you never pair every certification
+          with every other.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {types.map((type) => {
-          const current = new Set(
-            (type.supersedes ?? []).map((s) => s.lowerTypeId),
-          );
-          const others = types.filter((other) => other.id !== type.id);
-          return (
-            <form
-              key={type.id}
-              action={setCertificationSupersedes.bind(null, type.id)}
-              className="rounded-md border p-3"
-            >
-              <p className="text-sm font-medium">
-                {type.name}
-                {current.size ? (
-                  <span className="ml-2 text-xs font-normal text-muted-foreground">
-                    outranks{' '}
-                    {[...current]
-                      .map(
-                        (id) =>
-                          types.find((t) => t.id === id)?.abbreviation ?? id,
-                      )
-                      .join(', ')}
-                  </span>
-                ) : null}
-              </p>
-              <div className="mt-2 grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
-                {others.map((other) => (
-                  <label
-                    key={other.id}
-                    className="flex items-center gap-2 text-sm"
-                  >
-                    <input
-                      type="checkbox"
-                      name="lowerTypeIds"
-                      value={other.id}
-                      defaultChecked={current.has(other.id)}
-                      className="size-4"
-                    />
-                    {other.abbreviation}
-                    <span className="text-xs text-muted-foreground">
-                      {other.name}
-                    </span>
-                  </label>
-                ))}
-              </div>
-              <Button type="submit" size="sm" variant="outline" className="mt-2">
-                Save ranking
-              </Button>
-            </form>
-          );
-        })}
+        {ladders.map((chain) => (
+          <CertLadder
+            key={chain.join('-')}
+            types={types}
+            initial={chain}
+            title={chain
+              .map((id) => types.find((t) => t.id === id)?.abbreviation ?? id)
+              .join(' → ')}
+          />
+        ))}
+        <CertLadder types={types} initial={[]} title="New ladder" />
+        {unranked.length ? (
+          <p className="text-xs text-muted-foreground">
+            Not on a ladder: {unranked.map((t) => t.abbreviation).join(', ')}
+          </p>
+        ) : null}
       </CardContent>
     </Card>
   );
@@ -665,7 +656,7 @@ export default async function AdminSettingsPage({
 
       <SchedulingCard knobs={knobs} />
       <CertTypesCard types={certTypes} />
-      <CertHierarchyCard types={certTypes} />
+      <CertLaddersCard types={certTypes} />
       <EventKindsCard kinds={kinds} />
       <RequirementsCard
         credentialTypes={credentialTypes}
