@@ -127,6 +127,10 @@ export async function addRequirement(
   } else if (kind === 'EVALUATION_COUNT') {
     body.evalTemplateId = Number(formData.get('evalTemplateId'));
     body.count = Number(formData.get('count'));
+  } else if (kind === 'CHECKLIST') {
+    // A checklist requirement is satisfied by every line being signed off, so
+    // unlike an evaluation requirement it carries no count.
+    body.evalTemplateId = Number(formData.get('evalTemplateId'));
   } else if (kind === 'CLASS') {
     body.classId = Number(formData.get('classId'));
   }

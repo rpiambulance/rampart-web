@@ -65,7 +65,7 @@ type EventKind = { id: number; name: string; active?: boolean };
 
 type Requirement = {
   id: number;
-  kind: 'CERTIFICATION' | 'EVALUATION_COUNT' | 'CLASS';
+  kind: 'CERTIFICATION' | 'EVALUATION_COUNT' | 'CLASS' | 'CHECKLIST';
   count: number | null;
   certificationType: { id: number; name: string } | null;
   evalTemplate: { id: number; name: string } | null;
@@ -82,7 +82,12 @@ type CredentialType = {
 
 type RoleOption = { id: number; name: string };
 
-type EvalTemplate = { id: number; name: string; version: number };
+type EvalTemplate = {
+  id: number;
+  name: string;
+  version: number;
+  kind?: 'EVALUATION' | 'CHECKLIST';
+};
 
 type TrainingClass = { id: number; name: string };
 
@@ -123,6 +128,9 @@ function requirementLabel(req: Requirement): string {
   }
   if (req.kind === 'EVALUATION_COUNT') {
     return `${req.count ?? 1} × evaluation: ${req.evalTemplate?.name ?? 'unknown'}`;
+  }
+  if (req.kind === 'CHECKLIST') {
+    return `Checklist: ${req.evalTemplate?.name ?? 'unknown'}`;
   }
   return `Class: ${req.class?.name ?? 'unknown'}`;
 }
@@ -558,6 +566,7 @@ function RequirementsCard({
                   </option>
                   <option value="CERTIFICATION">Certification</option>
                   <option value="EVALUATION_COUNT">Evaluation count</option>
+                  <option value="CHECKLIST">Checklist</option>
                   <option value="CLASS">Class</option>
                 </select>
               </label>
@@ -577,11 +586,12 @@ function RequirementsCard({
                 </select>
               </label>
               <label className="grid gap-1 text-xs text-muted-foreground">
-                Eval template
+                Evaluation or checklist
                 <select name="evalTemplateId" defaultValue="" className={inputCls}>
                   <option value="">—</option>
                   {evalTemplates.map((template) => (
                     <option key={template.id} value={template.id}>
+                      {template.kind === 'CHECKLIST' ? 'Checklist: ' : ''}
                       {template.name} (v{template.version})
                     </option>
                   ))}
