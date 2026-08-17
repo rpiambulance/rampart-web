@@ -1,4 +1,5 @@
 import { api, ApiError } from '@/lib/api';
+import { prefers12Hour } from '@/lib/me';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -46,6 +47,7 @@ export default async function AdminAuditPage({
 }: {
   searchParams: Promise<{ limit?: string }>;
 }) {
+  const hour12 = await prefers12Hour();
   const { limit } = await searchParams;
   const take = limit && /^\d+$/.test(limit) ? Math.min(Number(limit), 500) : 100;
 
@@ -80,7 +82,7 @@ export default async function AdminAuditPage({
               {entries.map((entry) => (
                 <TableRow key={entry.id}>
                   <TableCell className="whitespace-nowrap text-xs">
-                    {formatDateTime(entry.at)}
+                    {formatDateTime(entry.at, hour12)}
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
                     <span className="text-sm">{entry.actorName}</span>{' '}

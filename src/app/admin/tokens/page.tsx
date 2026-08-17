@@ -1,4 +1,5 @@
 import { api, ApiError } from '@/lib/api';
+import { prefers12Hour } from '@/lib/me';
 import { formatDateTime } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -73,6 +74,7 @@ export default async function AdminTokensPage({
 }: {
   searchParams: Promise<{ error?: string; secret?: string }>;
 }) {
+  const hour12 = await prefers12Hour();
   const { error, secret } = await searchParams;
 
   let tokens: Token[];
@@ -179,14 +181,14 @@ export default async function AdminTokensPage({
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         {token.expiresAt ? (
-                          formatDateTime(token.expiresAt)
+                          formatDateTime(token.expiresAt, hour12)
                         ) : (
                           <Dash />
                         )}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         {token.lastUsedAt ? (
-                          formatDateTime(token.lastUsedAt)
+                          formatDateTime(token.lastUsedAt, hour12)
                         ) : (
                           <Dash />
                         )}
