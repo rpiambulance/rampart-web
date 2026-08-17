@@ -32,7 +32,6 @@ import {
   deactivateCertificationType,
   deactivateEventKind,
   removeRequirement,
-  saveNotificationChannels,
   setCredentialRoles,
   updateDayOfUnlockTime,
   updateDropDeadline,
