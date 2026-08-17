@@ -20,13 +20,14 @@ import {
 import { ErrorBanner } from '@/components/error-banner';
 import { PageHeader } from '@/components/page-header';
 import {
-  setCredentialRoles,
   addRequirement,
   createCertificationType,
   createEventKind,
   deactivateCertificationType,
   deactivateEventKind,
   removeRequirement,
+  setCertificationSupersedes,
+  setCredentialRoles,
   updateDayOfUnlockTime,
   updateDropDeadline,
   updateMinAgeYears,
@@ -51,6 +52,8 @@ type CertType = {
   issuingOrg: string | null;
   defaultValidityMonths: number | null;
   active?: boolean;
+  /** Certifications this one outranks. */
+  supersedes?: Array<{ lowerTypeId: number }>;
 };
 
 type EventKind = { id: number; name: string; active?: boolean };
@@ -379,6 +382,79 @@ function CertTypesCard({ types }: { types: CertType[] }) {
   );
 }
 
+/**
+ * Which certifications outrank which. Holding a higher one satisfies any
+ * requirement for those beneath it, so a Paramedic answers for EMT without
+ * anyone recording an EMT they do not hold.
+ */
+function CertHierarchyCard({ types }: { types: CertType[] }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Certification ranking</CardTitle>
+        <CardDescription>
+          Tick the certifications each one outranks. Ranking is followed all the
+          way down, so Paramedic over AEMT over EMT means a Paramedic satisfies
+          an EMT requirement — you only need to set the step directly beneath.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {types.map((type) => {
+          const current = new Set(
+            (type.supersedes ?? []).map((s) => s.lowerTypeId),
+          );
+          const others = types.filter((other) => other.id !== type.id);
+          return (
+            <form
+              key={type.id}
+              action={setCertificationSupersedes.bind(null, type.id)}
+              className="rounded-md border p-3"
+            >
+              <p className="text-sm font-medium">
+                {type.name}
+                {current.size ? (
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">
+                    outranks{' '}
+                    {[...current]
+                      .map(
+                        (id) =>
+                          types.find((t) => t.id === id)?.abbreviation ?? id,
+                      )
+                      .join(', ')}
+                  </span>
+                ) : null}
+              </p>
+              <div className="mt-2 grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
+                {others.map((other) => (
+                  <label
+                    key={other.id}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      name="lowerTypeIds"
+                      value={other.id}
+                      defaultChecked={current.has(other.id)}
+                      className="size-4"
+                    />
+                    {other.abbreviation}
+                    <span className="text-xs text-muted-foreground">
+                      {other.name}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <Button type="submit" size="sm" variant="outline" className="mt-2">
+                Save ranking
+              </Button>
+            </form>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
 function EventKindsCard({ kinds }: { kinds: EventKind[] }) {
   return (
     <Card>
@@ -589,6 +665,7 @@ export default async function AdminSettingsPage({
 
       <SchedulingCard knobs={knobs} />
       <CertTypesCard types={certTypes} />
+      <CertHierarchyCard types={certTypes} />
       <EventKindsCard kinds={kinds} />
       <RequirementsCard
         credentialTypes={credentialTypes}

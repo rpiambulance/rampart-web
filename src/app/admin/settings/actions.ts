@@ -170,3 +170,22 @@ export async function setCredentialRoles(
   }
   revalidatePath('/admin/settings');
 }
+
+export async function setCertificationSupersedes(
+  higherTypeId: number,
+  formData: FormData,
+) {
+  const lowerTypeIds = formData
+    .getAll('lowerTypeIds')
+    .map((value) => Number(value))
+    .filter((id) => Number.isFinite(id));
+  try {
+    await api(`/v1/certifications/types/${higherTypeId}/supersedes`, {
+      method: 'PUT',
+      body: JSON.stringify({ lowerTypeIds }),
+    });
+  } catch (error) {
+    fail(error);
+  }
+  revalidatePath('/admin/settings');
+}
