@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { filterNavGroups, hasConsoleAccess } from '@/lib/nav';
+import { recordPageView } from '@/lib/page-view';
 
 function SignOutButton({ name }: { name: string }) {
   return (
@@ -70,6 +71,10 @@ function Header({ right }: { right: React.ReactNode }) {
  */
 export async function NavShell({ children }: { children: React.ReactNode }) {
   const session = await auth();
+
+  // Every signed-in page renders through here, so this is the one place a
+  // page view can be recorded without touching each page.
+  if (session?.user) await recordPageView();
 
   if (!session?.user) {
     return (
