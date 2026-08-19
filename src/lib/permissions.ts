@@ -34,6 +34,9 @@ export const PERMISSION_INFO: Record<string, string> = {
   'fuel:write': 'Add fuel log entries',
   'radios:manage': 'Manage radio inventory and issue/return radios',
   'vehicles:manage': 'Manage fleet vehicles used by the fuel log',
+  'run-numbers:manage':
+    'Edit standby locations and wind their run-number counters',
+  'chores:manage': 'Create and edit chores, and reopen completed ones',
   'tokens:manage': 'Create and revoke API tokens',
   'audit:read': 'Read the audit log',
   'integrations:manage': 'Manage external integrations',
