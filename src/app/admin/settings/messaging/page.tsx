@@ -2,7 +2,11 @@ import { api, ApiError } from '@/lib/api';
 import { ErrorBanner } from '@/components/error-banner';
 import { PageHeader } from '@/components/page-header';
 import { EmailCard, type EmailSettings } from '../email-card';
-import { SlackCard, type SlackSettings } from '../slack-card';
+import {
+  SlackCard,
+  type ChannelCheck,
+  type SlackSettings,
+} from '../slack-card';
 import {
   NotificationsCard,
   type MessageTypeSetting,
@@ -33,12 +37,18 @@ export default async function MessagingSettingsPage({
   let emailSettings: EmailSettings;
   let messageTypes: MessageTypeSetting[];
   let slackSettings: SlackSettings;
+  // Asking Slack costs a round trip per channel, so a failure here must not
+  // take the page with it — the settings are still editable without it.
+  let slackChecks: ChannelCheck[] = [];
   try {
     [emailSettings, messageTypes, slackSettings] = await Promise.all([
       api<EmailSettings>('/v1/settings/email'),
       api<MessageTypeSetting[]>('/v1/settings/notifications'),
       api<SlackSettings>('/v1/settings/slack'),
     ]);
+    slackChecks = await api<ChannelCheck[]>('/v1/settings/slack/check').catch(
+      () => [],
+    );
   } catch (err) {
     if (err instanceof ApiError && err.status === 403) return <NoAccess />;
     throw err;
@@ -52,7 +62,7 @@ export default async function MessagingSettingsPage({
       />
       <ErrorBanner message={error} />
       <EmailCard settings={emailSettings} testResult={testResult} />
-      <SlackCard settings={slackSettings} />
+      <SlackCard settings={slackSettings} checks={slackChecks} />
       <NotificationsCard types={messageTypes} />
     </div>
   );

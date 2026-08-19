@@ -22,6 +22,13 @@ export type SlackSettings = {
   hasSigningSecret: boolean;
 };
 
+export type ChannelCheck = {
+  key: string;
+  channel: string;
+  ok: boolean;
+  detail: string;
+};
+
 const FIELD = 'h-8 rounded-md border border-input bg-background px-2 text-sm';
 
 /**
@@ -33,7 +40,15 @@ const FIELD = 'h-8 rounded-md border border-input bg-background px-2 text-sm';
  * token that can be read back out of a console is a token that leaves in a
  * screenshot.
  */
-export function SlackCard({ settings }: { settings: SlackSettings }) {
+export function SlackCard({
+  settings,
+  checks = [],
+}: {
+  settings: SlackSettings;
+  /** What Slack says about each configured channel. */
+  checks?: ChannelCheck[];
+}) {
+  const checkFor = (key: string) => checks.find((check) => check.key === key);
   return (
     <Card>
       <CardHeader>
@@ -69,6 +84,12 @@ export function SlackCard({ settings }: { settings: SlackSettings }) {
             </label>
           </div>
           <p className="text-xs text-muted-foreground">
+            The app needs <code>chat:write</code> to post and{' '}
+            <code>channels:join</code> to let itself into a public channel.
+            A private channel cannot be joined by a bot at all — invite it
+            with <code>/invite</code> in the channel itself.
+          </p>
+          <p className="text-xs text-muted-foreground">
             The signing secret is what proves an inbound request — a slash
             command, a button press — really came from Slack. Without it those
             are refused.
@@ -86,13 +107,29 @@ export function SlackCard({ settings }: { settings: SlackSettings }) {
                     {channel.description}
                   </p>
                 </div>
-                <input
-                  name={`channel:${channel.key}`}
-                  defaultValue={channel.value}
-                  placeholder="C0123456789"
-                  className={`${FIELD} w-56`}
-                  aria-label={`${channel.label} channel`}
-                />
+                <div className="grid gap-1">
+                  <input
+                    name={`channel:${channel.key}`}
+                    defaultValue={channel.value}
+                    placeholder="C0123456789"
+                    className={`${FIELD} w-56`}
+                    aria-label={`${channel.label} channel`}
+                  />
+                  {/* What Slack says, rather than what the form assumes: a
+                      channel that is set but unreachable looks identical to
+                      one that works until a message goes missing. */}
+                  {checkFor(channel.key) ? (
+                    <p
+                      className={`max-w-56 text-xs ${
+                        checkFor(channel.key)!.ok
+                          ? 'text-emerald-700 dark:text-emerald-500'
+                          : 'text-destructive'
+                      }`}
+                    >
+                      {checkFor(channel.key)!.detail}
+                    </p>
+                  ) : null}
+                </div>
               </div>
             ))}
           </div>
