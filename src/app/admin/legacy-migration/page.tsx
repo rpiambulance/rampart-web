@@ -142,6 +142,14 @@ function ConflictPrompt({ conflict }: { conflict: MigrationConflict }) {
   );
 }
 
+/**
+ * The one-shot import from the legacy MySQL portal.
+ *
+ * No longer linked from the navigation: it is a job that gets done once, and
+ * a standing link to it is an invitation to run it a second time. The page
+ * remains at this address for whoever needs it, and still requires
+ * system:migrate-legacy.
+ */
 export default async function LegacyMigrationPage({
   searchParams,
 }: {

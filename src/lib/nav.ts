@@ -40,17 +40,40 @@ export const NAV_GROUPS: NavGroup[] = [
         permissions: ['integrations:manage'],
       },
       { href: '/admin/roles', label: 'Roles & Permissions', permissions: ['roles:manage'] },
-      {
-        href: '/admin/settings',
-        label: 'App Settings',
-        permissions: ['settings:write', 'schedule:settings'],
-      },
       { href: '/admin/vehicles', label: 'Vehicles', permissions: ['vehicles:manage'] },
       { href: '/admin/audit', label: 'Audit Log', permissions: ['audit:read'] },
+    ],
+  },
+  {
+    // One page per subject rather than a single scroll of every card. The
+    // legacy import is deliberately absent: it is a one-shot job that has
+    // been done, and a live link to it is an invitation to run it again.
+    label: 'Settings',
+    items: [
       {
-        href: '/admin/legacy-migration',
-        label: 'Legacy Migration',
-        permissions: ['system:migrate-legacy'],
+        href: '/admin/settings/messaging',
+        label: 'Messaging',
+        permissions: ['settings:write'],
+      },
+      {
+        href: '/admin/settings/scheduling',
+        label: 'Scheduling',
+        permissions: ['schedule:settings', 'settings:write'],
+      },
+      {
+        href: '/admin/settings/credentials',
+        label: 'Credentials',
+        permissions: ['settings:write'],
+      },
+      {
+        href: '/admin/settings/certifications',
+        label: 'Certifications',
+        permissions: ['settings:write'],
+      },
+      {
+        href: '/admin/settings/events',
+        label: 'Events',
+        permissions: ['settings:write'],
       },
     ],
   },
