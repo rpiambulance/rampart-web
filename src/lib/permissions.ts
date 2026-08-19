@@ -37,6 +37,7 @@ export const PERMISSION_INFO: Record<string, string> = {
   'run-numbers:manage':
     'Edit standby locations and wind their run-number counters',
   'chores:manage': 'Create and edit chores, and reopen completed ones',
+  'service:status': 'Put the agency in or out of service',
   'tokens:manage': 'Create and revoke API tokens',
   'audit:read': 'Read the audit log',
   'integrations:manage': 'Manage external integrations',
