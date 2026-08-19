@@ -315,3 +315,38 @@ export async function saveSlackSettings(formData: FormData) {
   }
   revalidatePath('/admin/settings');
 }
+
+/**
+ * Applies the email matches an administrator confirmed.
+ *
+ * The pairs come back from the form rather than being recomputed, so what is
+ * written is exactly what was shown — a member whose Slack address changed
+ * between rendering and pressing cannot be linked to somebody else.
+ */
+export async function applySlackLinks(formData: FormData) {
+  let pairs: Array<{ memberId: number; slackId: string }> = [];
+  try {
+    pairs = JSON.parse(String(formData.get('pairs') ?? '[]')) as typeof pairs;
+  } catch {
+    pairs = [];
+  }
+  if (!pairs.length) return;
+
+  let result = { linked: 0, skipped: 0 };
+  try {
+    result = await api<{ linked: number; skipped: number }>(
+      '/v1/settings/slack/links/apply',
+      { method: 'POST', body: JSON.stringify({ pairs }) },
+    );
+  } catch (error) {
+    fail(error);
+  }
+  revalidatePath('/admin/settings/messaging');
+  redirect(
+    `/admin/settings/messaging?matched=${encodeURIComponent(
+      `${result.linked} account${result.linked === 1 ? '' : 's'}${
+        result.skipped ? `, ${result.skipped} skipped` : ''
+      }`,
+    )}`,
+  );
+}
