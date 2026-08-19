@@ -281,3 +281,33 @@ export async function saveNotificationChannels(formData: FormData) {
   }
   revalidatePath('/admin/settings');
 }
+
+/**
+ * Slack settings. A blank secret means "leave it as it is" — the form never
+ * showed the stored one, so blank cannot mean "clear it" without making an
+ * unrelated edit wipe the token.
+ */
+export async function saveSlackSettings(formData: FormData) {
+  const channels: Record<string, string> = {};
+  for (const [name, value] of formData.entries()) {
+    if (name.startsWith('channel:')) {
+      channels[name.slice('channel:'.length)] = String(value).trim();
+    }
+  }
+  const botToken = String(formData.get('botToken') ?? '').trim();
+  const signingSecret = String(formData.get('signingSecret') ?? '').trim();
+
+  try {
+    await api('/v1/settings/slack', {
+      method: 'PUT',
+      body: JSON.stringify({
+        channels,
+        ...(botToken ? { botToken } : {}),
+        ...(signingSecret ? { signingSecret } : {}),
+      }),
+    });
+  } catch (error) {
+    fail(error);
+  }
+  revalidatePath('/admin/settings');
+}

@@ -20,6 +20,7 @@ import {
 import { ErrorBanner } from '@/components/error-banner';
 import { PageHeader } from '@/components/page-header';
 import { EmailCard, type EmailSettings } from './email-card';
+import { SlackCard, type SlackSettings } from './slack-card';
 import {
   NotificationsCard,
   type MessageTypeSetting,
@@ -656,6 +657,11 @@ export default async function AdminSettingsPage({
   let roles: RoleOption[];
   let emailSettings: EmailSettings = { configured: false };
   let messageTypes: MessageTypeSetting[] = [];
+  let slackSettings: SlackSettings = {
+    channels: [],
+    hasBotToken: false,
+    hasSigningSecret: false,
+  };
   try {
     [knobs, certTypes, kinds, credentialTypes, evalTemplates, classes, roles] =
       await Promise.all([
@@ -667,9 +673,10 @@ export default async function AdminSettingsPage({
         api<TrainingClass[]>('/v1/trainings/classes'),
         api<RoleOption[]>('/v1/roles'),
       ]);
-    [emailSettings, messageTypes] = await Promise.all([
+    [emailSettings, messageTypes, slackSettings] = await Promise.all([
       api<EmailSettings>('/v1/settings/email'),
       api<MessageTypeSetting[]>('/v1/settings/notifications'),
+      api<SlackSettings>('/v1/settings/slack'),
     ]);
   } catch (err) {
     if (err instanceof ApiError && err.status === 403) return <NoAccess />;
@@ -685,6 +692,7 @@ export default async function AdminSettingsPage({
       <ErrorBanner message={error} />
 
       <EmailCard settings={emailSettings} testResult={testResult} />
+      <SlackCard settings={slackSettings} />
       <NotificationsCard types={messageTypes} />
       <SchedulingCard knobs={knobs} />
       <CertTypesCard types={certTypes} />
