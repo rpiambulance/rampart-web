@@ -67,6 +67,8 @@ type EventKind = { id: number; name: string; active?: boolean };
 type Requirement = {
   id: number;
   kind: 'CERTIFICATION' | 'EVALUATION_COUNT' | 'CLASS' | 'CHECKLIST';
+  /** Requirements sharing a label are alternatives: any one of them will do. */
+  alternativeGroup: string | null;
   count: number | null;
   certificationType: { id: number; name: string } | null;
   evalTemplate: { id: number; name: string } | null;
@@ -134,6 +136,35 @@ function requirementLabel(req: Requirement): string {
     return `Checklist: ${req.evalTemplate?.name ?? 'unknown'}`;
   }
   return `Class: ${req.class?.name ?? 'unknown'}`;
+}
+
+function RemoveRequirement({ id }: { id: number }) {
+  return (
+    <form action={removeRequirement.bind(null, id)}>
+      <Button
+        type="submit"
+        variant="ghost"
+        size="sm"
+        className="h-6 px-2 text-xs text-destructive"
+      >
+        remove
+      </Button>
+    </form>
+  );
+}
+
+/** Requirements sharing a group are alternatives; the label says so once. */
+function groupedRequirements(requirements: Requirement[]) {
+  const standalone = requirements.filter((req) => !req.alternativeGroup);
+  const groups = new Map<string, Requirement[]>();
+  for (const req of requirements) {
+    if (!req.alternativeGroup) continue;
+    groups.set(req.alternativeGroup, [
+      ...(groups.get(req.alternativeGroup) ?? []),
+      req,
+    ]);
+  }
+  return { standalone, groups };
 }
 
 function SchedulingCard({ knobs }: { knobs: SchedulingKnobs }) {
@@ -536,21 +567,36 @@ function RequirementsCard({
             </h3>
             {type.requirements.length ? (
               <ul className="space-y-1">
-                {type.requirements.map((req) => (
+                {groupedRequirements(type.requirements).standalone.map((req) => (
                   <li key={req.id} className="flex items-center gap-2 text-sm">
                     <span>{requirementLabel(req)}</span>
-                    <form action={removeRequirement.bind(null, req.id)}>
-                      <Button
-                        type="submit"
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2 text-xs text-destructive"
-                      >
-                        remove
-                      </Button>
-                    </form>
+                    <RemoveRequirement id={req.id} />
                   </li>
                 ))}
+                {/* Alternatives are listed under their shared label so it is
+                    obvious that meeting one of them is enough. */}
+                {[...groupedRequirements(type.requirements).groups].map(
+                  ([label, reqs]) => (
+                    <li key={label} className="text-sm">
+                      <span className="font-medium">{label}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {' '}
+                        — any one of:
+                      </span>
+                      <ul className="ml-4 space-y-1 border-l pl-3">
+                        {reqs.map((req) => (
+                          <li
+                            key={req.id}
+                            className="flex items-center gap-2 text-sm"
+                          >
+                            <span>{requirementLabel(req)}</span>
+                            <RemoveRequirement id={req.id} />
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                  ),
+                )}
               </ul>
             ) : (
               <p className="text-sm text-muted-foreground">No requirements.</p>
@@ -570,6 +616,15 @@ function RequirementsCard({
                   <option value="CHECKLIST">Checklist</option>
                   <option value="CLASS">Class</option>
                 </select>
+              </label>
+              <label className="grid gap-1 text-xs text-muted-foreground">
+                Either/or group (optional)
+                <input
+                  name="alternativeGroup"
+                  placeholder="Driving qualification"
+                  title="Give two requirements the same label and meeting either one is enough."
+                  className={inputCls}
+                />
               </label>
               <label className="grid gap-1 text-xs text-muted-foreground">
                 Certification type

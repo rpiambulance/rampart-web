@@ -34,6 +34,11 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Administration',
     items: [
       { href: '/admin/tokens', label: 'API Tokens', permissions: ['tokens:manage'] },
+      {
+        href: '/admin/webhooks',
+        label: 'Webhooks',
+        permissions: ['integrations:manage'],
+      },
       { href: '/admin/roles', label: 'Roles & Permissions', permissions: ['roles:manage'] },
       {
         href: '/admin/settings',

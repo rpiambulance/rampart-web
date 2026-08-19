@@ -121,7 +121,11 @@ export async function addRequirement(
   formData: FormData,
 ) {
   const kind = String(formData.get('kind') ?? '');
-  const body: Record<string, unknown> = { kind };
+  const group = String(formData.get('alternativeGroup') ?? '').trim();
+  const body: Record<string, unknown> = {
+    kind,
+    ...(group ? { alternativeGroup: group } : {}),
+  };
   if (kind === 'CERTIFICATION') {
     body.certificationTypeId = Number(formData.get('certificationTypeId'));
   } else if (kind === 'EVALUATION_COUNT') {
