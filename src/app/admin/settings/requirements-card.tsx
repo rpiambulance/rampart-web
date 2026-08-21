@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { addRequirement, removeRequirement } from './actions';
+import { RequirementScope } from './requirement-scope';
 import {
   INPUT_CLS as inputCls,
   type CertType,
@@ -78,6 +79,10 @@ export function RequirementsCard({
         <CardDescription>
           What a member must complete before each credential can be granted.
           For the add form, fill in only the field matching the selected kind.
+          A promotion requirement is checked once, on the way up, so adding one
+          never reaches back and suspends somebody promoted under the old
+          rules. An ongoing requirement is checked continuously and does
+          suspend — give it an in-force date so it only bites going forward.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -92,6 +97,7 @@ export function RequirementsCard({
                 {groupedRequirements(type.requirements).standalone.map((req) => (
                   <li key={req.id} className="flex items-center gap-2 text-sm">
                     <span>{requirementLabel(req)}</span>
+                    <RequirementScope req={req} />
                     <RemoveRequirement id={req.id} />
                   </li>
                 ))}
@@ -112,6 +118,7 @@ export function RequirementsCard({
                             className="flex items-center gap-2 text-sm"
                           >
                             <span>{requirementLabel(req)}</span>
+                            <RequirementScope req={req} />
                             <RemoveRequirement id={req.id} />
                           </li>
                         ))}
@@ -138,6 +145,23 @@ export function RequirementsCard({
                   <option value="CHECKLIST">Checklist</option>
                   <option value="CLASS">Class</option>
                 </select>
+              </label>
+              <label className="grid gap-1 text-xs text-muted-foreground">
+                When it applies
+                <select name="scope" defaultValue="PROMOTION" className={inputCls}>
+                  <option value="PROMOTION">At promotion only</option>
+                  <option value="ONGOING">Ongoing only</option>
+                  <option value="BOTH">Both</option>
+                </select>
+              </label>
+              <label className="grid gap-1 text-xs text-muted-foreground">
+                In force from (optional)
+                <input
+                  type="date"
+                  name="effectiveFrom"
+                  title="An ongoing requirement suspends nobody for anything before this date."
+                  className={inputCls}
+                />
               </label>
               <label className="grid gap-1 text-xs text-muted-foreground">
                 Either/or group (optional)

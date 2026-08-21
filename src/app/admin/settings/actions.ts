@@ -116,15 +116,60 @@ export async function deactivateEventKind(id: number) {
 
 // ---- credential requirements ----
 
+/**
+ * Move a requirement between "checked at promotion" and "checked forever".
+ *
+ * Optionally excusing everybody it would catch today, which is what makes the
+ * switch safe to throw on an agency whose records predate the rule.
+ */
+export async function setRequirementScope(
+  requirementId: number,
+  formData: FormData,
+) {
+  const scope = String(formData.get('scope') ?? '');
+  const effectiveFrom = String(formData.get('effectiveFrom') ?? '').trim();
+  try {
+    await api(`/v1/credentials/requirements/${requirementId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        scope,
+        effectiveFrom: effectiveFrom ? `${effectiveFrom}T00:00:00.000Z` : null,
+      }),
+    });
+    if (formData.get('grandfather') === 'on') {
+      await api(`/v1/credentials/requirements/${requirementId}/grandfather`, {
+        method: 'POST',
+      });
+    }
+  } catch (error) {
+    fail(error);
+  }
+  revalidatePath('/admin/settings/credentials');
+}
+
+/** Who the requirement would suspend today, for the confirmation step. */
+export async function requirementImpact(requirementId: number) {
+  return api<{
+    enforceable: boolean;
+    certificationType: string | null;
+    members: Array<{ id: number; name: string; reason: string }>;
+  }>(`/v1/credentials/requirements/${requirementId}/impact`);
+}
+
 export async function addRequirement(
   credentialTypeId: number,
   formData: FormData,
 ) {
   const kind = String(formData.get('kind') ?? '');
   const group = String(formData.get('alternativeGroup') ?? '').trim();
+  const scope = String(formData.get('scope') ?? 'PROMOTION');
+  const effectiveFrom = String(formData.get('effectiveFrom') ?? '').trim();
   const body: Record<string, unknown> = {
     kind,
+    scope,
     ...(group ? { alternativeGroup: group } : {}),
+    // A date-only value; the API reads it as the New York calendar day.
+    ...(effectiveFrom ? { effectiveFrom: `${effectiveFrom}T00:00:00.000Z` } : {}),
   };
   if (kind === 'CERTIFICATION') {
     body.certificationTypeId = Number(formData.get('certificationTypeId'));

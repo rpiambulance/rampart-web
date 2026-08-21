@@ -30,6 +30,9 @@ export type EventKind = { id: number; name: string; active?: boolean };
 
 export type Requirement = {
   id: number;
+  /** Checked at promotion, continuously, or both. */
+  scope?: 'PROMOTION' | 'ONGOING' | 'BOTH';
+  effectiveFrom?: string | null;
   kind: 'CERTIFICATION' | 'EVALUATION_COUNT' | 'CLASS' | 'CHECKLIST';
   /** Requirements sharing a label are alternatives: any one of them will do. */
   alternativeGroup: string | null;
