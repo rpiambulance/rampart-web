@@ -55,7 +55,16 @@ function FieldRules({ type }: { type: CertType }) {
           className="grid gap-1 text-[10px] uppercase tracking-wide text-muted-foreground"
         >
           {field.label}
+          {/*
+            Keyed on the saved value, which is what makes the select show what
+            was just saved. React resets an uncontrolled form once its action
+            finishes, and a reset restores each field to the defaultValue it
+            was *mounted* with — updated props do not reach an element that is
+            already on the page. Without the key the selects snapped back to
+            Optional after every save while the database held the new value.
+          */}
           <select
+            key={type[field.name] ?? 'OPTIONAL'}
             name={field.name}
             defaultValue={type[field.name] ?? 'OPTIONAL'}
             className={`${inputCls} h-7 text-xs`}
