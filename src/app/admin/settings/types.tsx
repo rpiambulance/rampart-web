@@ -15,7 +15,13 @@ export type SchedulingKnobs = {
   dropDeadline: { daysBefore: number; time: string };
 };
 
+export type FieldRequirement = 'HIDDEN' | 'OPTIONAL' | 'REQUIRED';
+
 export type CertType = {
+  identifierField?: FieldRequirement;
+  issuedAtField?: FieldRequirement;
+  expiresAtField?: FieldRequirement;
+  documentField?: FieldRequirement;
   id: number;
   name: string;
   abbreviation: string;

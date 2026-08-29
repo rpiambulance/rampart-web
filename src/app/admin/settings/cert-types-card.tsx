@@ -18,8 +18,62 @@ import {
 import {
   createCertificationType,
   deactivateCertificationType,
+  setCertificationFields,
 } from './actions';
-import { Dash, INPUT_CLS as inputCls, StatusBadge, type CertType } from './types';
+import {
+  Dash,
+  INPUT_CLS as inputCls,
+  StatusBadge,
+  type CertType,
+  type FieldRequirement,
+} from './types';
+
+/**
+ * Which details a type asks for, and whether they may be left blank.
+ *
+ * Hidden is not merely cosmetic: the API drops a hidden field rather than
+ * trusting it, because the form is not the only way a submission can arrive.
+ */
+const FIELDS = [
+  { name: 'identifierField', label: 'Number' },
+  { name: 'issuedAtField', label: 'Issued' },
+  { name: 'expiresAtField', label: 'Expires' },
+  { name: 'documentField', label: 'File' },
+] as const;
+
+const CHOICES: FieldRequirement[] = ['HIDDEN', 'OPTIONAL', 'REQUIRED'];
+
+function FieldRules({ type }: { type: CertType }) {
+  return (
+    <form
+      action={setCertificationFields.bind(null, type.id)}
+      className="flex flex-wrap items-end gap-2"
+    >
+      {FIELDS.map((field) => (
+        <label
+          key={field.name}
+          className="grid gap-1 text-[10px] uppercase tracking-wide text-muted-foreground"
+        >
+          {field.label}
+          <select
+            name={field.name}
+            defaultValue={type[field.name] ?? 'OPTIONAL'}
+            className={`${inputCls} h-7 text-xs`}
+          >
+            {CHOICES.map((choice) => (
+              <option key={choice} value={choice}>
+                {choice.charAt(0) + choice.slice(1).toLowerCase()}
+              </option>
+            ))}
+          </select>
+        </label>
+      ))}
+      <Button type="submit" variant="outline" size="sm" className="h-7 text-xs">
+        Save fields
+      </Button>
+    </form>
+  );
+}
 
 export function CertTypesCard({ types }: { types: CertType[] }) {
   return (
@@ -40,6 +94,7 @@ export function CertTypesCard({ types }: { types: CertType[] }) {
                   <TableHead>Abbrev.</TableHead>
                   <TableHead>Issuing org</TableHead>
                   <TableHead>Validity (months)</TableHead>
+                  <TableHead>Fields asked for</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -51,6 +106,9 @@ export function CertTypesCard({ types }: { types: CertType[] }) {
                     <TableCell>{type.issuingOrg ?? <Dash />}</TableCell>
                     <TableCell>
                       {type.defaultValidityMonths ?? <Dash />}
+                    </TableCell>
+                    <TableCell>
+                      <FieldRules type={type} />
                     </TableCell>
                     <TableCell>
                       {type.active === false ? (
