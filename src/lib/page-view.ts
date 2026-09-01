@@ -14,6 +14,8 @@ import { api } from './api';
  */
 export async function recordPageView(): Promise<void> {
   try {
+    // The browser's address rides along with every call api() makes now, so
+    // there is nothing to forward by hand here.
     const incoming = await headers();
     // Set by middleware; without it there is no path worth recording.
     const path = incoming.get('x-pathname');
@@ -24,16 +26,6 @@ export async function recordPageView(): Promise<void> {
     void api('/v1/access-log/page-view', {
       method: 'POST',
       body: JSON.stringify({ path }),
-      headers: {
-        // The browser's address, not this server's — otherwise every page
-        // view in the log comes from the portal itself.
-        ...(incoming.get('x-forwarded-for')
-          ? { 'x-forwarded-for': incoming.get('x-forwarded-for')! }
-          : {}),
-        ...(incoming.get('user-agent')
-          ? { 'user-agent': incoming.get('user-agent')! }
-          : {}),
-      },
     }).catch(() => {});
   } catch {
     // No headers available, or no session. Not worth failing a page over.
