@@ -23,7 +23,7 @@ export default async function EventSettingsPage({
     <div className="space-y-6">
       <PageHeader
         title="Events"
-        description="The kinds an event can be, which decide how it is coloured on the calendar."
+        description="The kinds an event can be, which decide how it is colored on the calendar."
       />
       <ErrorBanner message={error} />
       <EventKindsCard kinds={kinds} />

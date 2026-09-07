@@ -12,7 +12,7 @@ const SELECT =
 /**
  * Builds one ladder: an ordered chain from the highest certification down to
  * the lowest. Only certifications not already on this ladder are offered, and
- * the ranking is stored as the neighbouring steps — the rest follows, so a
+ * the ranking is stored as the neighboring steps — the rest follows, so a
  * Paramedic satisfies an EMT requirement without anyone linking those two.
  */
 export function CertLadder({

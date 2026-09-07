@@ -55,7 +55,7 @@ const SECTIONS: Array<{
     href: '/admin/settings/events',
     title: 'Events',
     description:
-      'The kinds an event can be, which decide how it is coloured on the calendar.',
+      'The kinds an event can be, which decide how it is colored on the calendar.',
     permissions: ['settings:write'],
   },
 ];

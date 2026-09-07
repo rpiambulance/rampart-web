@@ -79,7 +79,7 @@ export async function createCertificationType(formData: FormData) {
 /**
  * What a certification type asks of whoever submits it.
  *
- * A driver's licence needs its number and its expiry; a one-off class needs
+ * A driver's license needs its number and its expiry; a one-off class needs
  * neither, and a form that asks anyway teaches people to leave fields blank.
  */
 export async function setCertificationFields(id: number, formData: FormData) {

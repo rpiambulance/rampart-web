@@ -34,7 +34,7 @@ const FIELD = 'h-8 rounded-md border border-input bg-background px-2 text-sm';
 /**
  * Slack, configured here rather than in the environment.
  *
- * Channels move as a workspace is reorganised, and "redeploy the API to
+ * Channels move as a workspace is reorganized, and "redeploy the API to
  * change where a message lands" is the wrong shape of task. Secrets are
  * write-only: the form says whether one is set, never what it is, because a
  * token that can be read back out of a console is a token that leaves in a
