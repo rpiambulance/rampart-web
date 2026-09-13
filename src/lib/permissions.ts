@@ -47,7 +47,6 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       'events:approve',
       'events:decline',
       'events:lock',
-      'events:delete',
     ],
   },
   {
@@ -146,13 +145,12 @@ export const PERMISSION_INFO: Record<string, string> = {
     'Change the scheduling rules: signup opening times, the rotation window, minimum age',
 
   // Events & coverage
-  'events:create': 'Create and edit events, and see who is available for one',
+  'events:create':
+    'Create, edit and delete events, and see who is available for one. Deleting is part of keeping the calendar: an event with a standby opened against it cannot be deleted at all until the standby is discarded',
   'events:assign-others': 'Sign other members up to events, and remove them',
   'events:approve': 'Approve a coverage request and publish the event',
   'events:decline': 'Decline a coverage request',
   'events:lock': 'Lock an event so members can no longer sign themselves up',
-  'events:delete':
-    'Delete an event outright. Held apart from creating one — an event carries its signups, and possibly a whole standby',
 
   // Event standbys
   'standbys:manage':
