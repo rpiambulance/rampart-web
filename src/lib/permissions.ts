@@ -47,6 +47,7 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       'events:approve',
       'events:decline',
       'events:lock',
+      'events:delete',
     ],
   },
   {
@@ -149,6 +150,8 @@ export const PERMISSION_INFO: Record<string, string> = {
   'events:approve': 'Approve a coverage request and publish the event',
   'events:decline': 'Decline a coverage request',
   'events:lock': 'Lock an event so members can no longer sign themselves up',
+  'events:delete':
+    'Delete an event outright. Held apart from creating one — an event carries its signups, and possibly a whole standby',
 
   // Event standbys
   'standbys:manage':
