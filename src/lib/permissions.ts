@@ -157,7 +157,7 @@ export const PERMISSION_INFO: Record<string, string> = {
   'standbys:manage':
     'Open and run an event standby: personnel, units, and the record as a whole. Writing up an encounter needs only being on the standby',
   'standbys:read-all':
-    "Read every encounter from every standby. Supervisors already see their own standby's",
+    'Read every encounter from every standby. A supervisor already sees the encounters on a standby they are working; this is for whoever answers for one they did not',
 
   // Certifications & credentials
   'certs:read-all': "View any member's certifications and the expiring report",
