@@ -36,10 +36,12 @@ type Role = {
   credentialLinks: Array<{
     credentialType: { id: number; name: string; key: string };
   }>;
-  /** Who holds it that way today. */
+  /** Who holds it that way today, and under which credential. */
   conferred: Array<{
     member: { id: number; firstName: string; lastName: string };
     credentialType: { id: number; name: string; key: string };
+    /** They hold something above the linked credential, not the link. */
+    inherited: boolean;
   }>;
 };
 
@@ -96,6 +98,12 @@ function PermissionPicker({
  * a number does not answer it. Nothing here is removable: the way somebody
  * leaves this list is to lose the credential, or for the link itself to go,
  * which is a decision made in Settings.
+ *
+ * Read "or above", like everything else this system asks of a credential: a
+ * role linked to Crew Chief is held by a Crew Chief Trainer and by a Duty
+ * Supervisor, whose records often do not carry the rungs beneath them at
+ * all. Each name carries the credential that person actually holds, so a
+ * list longer than the link explains says why.
  */
 function ByCredential({ role }: { role: Role }) {
   const links = role.credentialLinks ?? [];
@@ -111,7 +119,8 @@ function ByCredential({ role }: { role: Role }) {
       <h3 className="text-sm font-medium">
         By credential{' '}
         <span className="text-xs font-normal text-muted-foreground">
-          held automatically by whoever holds {credentials}
+          held automatically by whoever holds {credentials}, or anything above
+          it on the ladder
         </span>
       </h3>
       {holders.length ? (
@@ -124,11 +133,19 @@ function ByCredential({ role }: { role: Role }) {
               <span>
                 {holder.member.lastName}, {holder.member.firstName}
               </span>
-              {links.length > 1 ? (
-                <Badge variant="outline" className="text-xs">
-                  {holder.credentialType.key}
-                </Badge>
-              ) : null}
+              <Badge
+                variant="outline"
+                className={`text-xs ${
+                  holder.inherited ? 'text-muted-foreground' : ''
+                }`}
+                title={
+                  holder.inherited
+                    ? `Holds ${holder.credentialType.name}, which is above the linked credential`
+                    : holder.credentialType.name
+                }
+              >
+                {holder.credentialType.key}
+              </Badge>
             </li>
           ))}
         </ul>
