@@ -45,11 +45,14 @@ function PermissionPicker({
 }) {
   return (
     <div className="space-y-3">
-      {groupPermissions(catalog).map(({ group, permissions }) => (
+      {groupPermissions(catalog).map(({ group, blurb, permissions }) => (
         <div key={group}>
-          <h4 className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {group}
           </h4>
+          {blurb ? (
+            <p className="mb-1 text-xs text-muted-foreground">{blurb}</p>
+          ) : null}
           <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
             {permissions.map((permission) => (
               <label key={permission} className="flex items-start gap-2 text-sm">

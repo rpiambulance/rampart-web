@@ -249,11 +249,14 @@ export default async function AdminTokensPage({
                 Permissions
               </legend>
               <div className="space-y-3">
-                {groupPermissions(permissionCatalog).map(({ group, permissions }) => (
+                {groupPermissions(permissionCatalog).map(({ group, blurb, permissions }) => (
                   <div key={group}>
-                    <h3 className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                       {group}
                     </h3>
+                    {blurb ? (
+                      <p className="mb-1 text-xs text-muted-foreground">{blurb}</p>
+                    ) : null}
                     <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
                       {permissions.map((permission) => (
                         <label
