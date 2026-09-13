@@ -32,6 +32,15 @@ type Role = {
     endDate: string | null;
     member: { id: number; firstName: string; lastName: string };
   }>;
+  /** Credentials that confer this role on whoever holds them. */
+  credentialLinks: Array<{
+    credentialType: { id: number; name: string; key: string };
+  }>;
+  /** Who holds it that way today. */
+  conferred: Array<{
+    member: { id: number; firstName: string; lastName: string };
+    credentialType: { id: number; name: string; key: string };
+  }>;
 };
 
 type Member = { id: number; firstName: string; lastName: string };
@@ -74,6 +83,60 @@ function PermissionPicker({
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Who holds the role without anybody having assigned it.
+ *
+ * A credential link is a standing rule, so this list changes on its own as
+ * credentials are granted and suspended. Listed rather than counted because
+ * the question an officer is asking at this page is "who can do this", and
+ * a number does not answer it. Nothing here is removable: the way somebody
+ * leaves this list is to lose the credential, or for the link itself to go,
+ * which is a decision made in Settings.
+ */
+function ByCredential({ role }: { role: Role }) {
+  const links = role.credentialLinks ?? [];
+  if (!links.length) return null;
+  const credentials = links
+    .map((link) => link.credentialType.name)
+    .sort((a, b) => a.localeCompare(b))
+    .join(', ');
+  const holders = role.conferred ?? [];
+
+  return (
+    <div className="space-y-2 rounded-md border border-dashed px-3 py-2">
+      <h3 className="text-sm font-medium">
+        By credential{' '}
+        <span className="text-xs font-normal text-muted-foreground">
+          held automatically by whoever holds {credentials}
+        </span>
+      </h3>
+      {holders.length ? (
+        <ul className="grid gap-1 sm:grid-cols-2">
+          {holders.map((holder) => (
+            <li
+              key={`${holder.member.id}-${holder.credentialType.id}`}
+              className="flex flex-wrap items-center gap-2 text-sm"
+            >
+              <span>
+                {holder.member.lastName}, {holder.member.firstName}
+              </span>
+              {links.length > 1 ? (
+                <Badge variant="outline" className="text-xs">
+                  {holder.credentialType.key}
+                </Badge>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Nobody holds {links.length === 1 ? 'that credential' : 'those credentials'} right now.
+        </p>
+      )}
     </div>
   );
 }
@@ -188,6 +251,8 @@ function RoleCard({
             <p className="text-sm text-muted-foreground">Nobody assigned.</p>
           )}
         </div>
+        <ByCredential role={role} />
+
         <form
           action={assignRole.bind(null, role.id)}
           className="flex flex-wrap items-end gap-2"
