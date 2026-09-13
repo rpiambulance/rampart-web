@@ -50,11 +50,6 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
-    label: 'Event standbys',
-    blurb: 'Running a standby, and reading what happened at one.',
-    permissions: ['standbys:manage', 'standbys:read-all'],
-  },
-  {
     label: 'Certifications & credentials',
     blurb:
       'Cards members hold, and the agency positions they are cleared for.',
@@ -90,12 +85,15 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
   },
   {
     label: 'Call operations',
-    blurb: 'Dispatches, run numbers, and whether the agency is in service.',
+    blurb:
+      'Dispatches, run numbers, event standbys, and whether the agency is in service.',
     permissions: [
       'dispatches:read',
       'dispatches:write',
       'dispatches:ingest',
       'run-numbers:manage',
+      'standbys:manage',
+      'standbys:read-all',
       'service:status',
     ],
   },
