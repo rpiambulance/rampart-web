@@ -87,7 +87,11 @@ export function SlackCard({
             The app needs <code>chat:write</code> to post and{' '}
             <code>channels:join</code> to let itself into a public channel.
             A private channel cannot be joined by a bot at all — invite it
-            with <code>/invite</code> in the channel itself.
+            with <code>/invite</code> in the channel itself.{' '}
+            <code>files:write</code> is needed to hand Slack the dispatch
+            audio, and <code>channels:read</code> plus{' '}
+            <code>groups:read</code> only so the check below can say which
+            channels are in order — posting works without them.
           </p>
           <p className="text-xs text-muted-foreground">
             The signing secret is what proves an inbound request — a slash
