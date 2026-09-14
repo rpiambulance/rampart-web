@@ -1,4 +1,5 @@
 import { PERMISSION_INFO, groupPermissions } from '@/lib/permissions';
+import { surnameFirst } from '@/lib/name';
 import { api, ApiError } from '@/lib/api';
 import { formatDate } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
@@ -30,7 +31,12 @@ type Role = {
     id: number;
     startDate: string;
     endDate: string | null;
-    member: { id: number; firstName: string; lastName: string };
+    member: {
+      id: number;
+      firstName: string;
+      preferredFirstName?: string | null;
+      lastName: string;
+    };
   }>;
   /** Credentials that confer this role on whoever holds them. */
   credentialLinks: Array<{
@@ -38,14 +44,24 @@ type Role = {
   }>;
   /** Who holds it that way today, and under which credential. */
   conferred: Array<{
-    member: { id: number; firstName: string; lastName: string };
+    member: {
+      id: number;
+      firstName: string;
+      preferredFirstName?: string | null;
+      lastName: string;
+    };
     credentialType: { id: number; name: string; key: string };
     /** They hold something above the linked credential, not the link. */
     inherited: boolean;
   }>;
 };
 
-type Member = { id: number; firstName: string; lastName: string };
+type Member = {
+  id: number;
+  firstName: string;
+  preferredFirstName?: string | null;
+  lastName: string;
+};
 
 function PermissionPicker({
   catalog,
@@ -131,7 +147,7 @@ function ByCredential({ role }: { role: Role }) {
               className="flex flex-wrap items-center gap-2 text-sm"
             >
               <span>
-                {holder.member.lastName}, {holder.member.firstName}
+                {surnameFirst(holder.member)}
               </span>
               <Badge
                 variant="outline"
@@ -185,7 +201,7 @@ function MemberSelect({ members, name }: { members: Member[]; name: string }) {
       </option>
       {members.map((m) => (
         <option key={m.id} value={m.id}>
-          {m.lastName}, {m.firstName}
+          {surnameFirst(m)}
         </option>
       ))}
     </select>
@@ -242,7 +258,7 @@ function RoleCard({
                   className="flex items-center gap-2 text-sm"
                 >
                   <span>
-                    {assignment.member.lastName}, {assignment.member.firstName}
+                    {surnameFirst(assignment.member)}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {formatDate(assignment.startDate)}

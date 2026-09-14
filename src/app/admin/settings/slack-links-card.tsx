@@ -8,12 +8,14 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { applySlackLinks } from './actions';
+import { surnameFirst } from '@/lib/name';
 
 export type SlackLinks = {
   linked: number;
   unlinked: Array<{
     id: number;
     firstName: string;
+    preferredFirstName?: string | null;
     lastName: string;
     email: string;
   }>;
@@ -126,7 +128,7 @@ export function SlackLinksCard({
             <ul className="mt-2 space-y-1 text-sm">
               {links.unlinked.map((member) => (
                 <li key={member.id}>
-                  {member.lastName}, {member.firstName}{' '}
+                  {surnameFirst(member)}{' '}
                   <span className="text-xs text-muted-foreground">
                     {member.email}
                   </span>

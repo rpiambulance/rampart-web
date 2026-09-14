@@ -22,6 +22,7 @@ import { ErrorBanner } from '@/components/error-banner';
 import { PageHeader } from '@/components/page-header';
 import { createToken, revokeToken } from './actions';
 import { PERMISSION_INFO, groupPermissions } from '@/lib/permissions';
+import { surnameFirst } from '@/lib/name';
 
 type Token = {
   id: number;
@@ -31,7 +32,12 @@ type Token = {
   revokedAt: string | null;
   lastUsedAt: string | null;
   createdAt: string;
-  owner: { id: number; firstName: string; lastName: string } | null;
+  owner: {
+    id: number;
+    firstName: string;
+    preferredFirstName?: string | null;
+    lastName: string;
+  } | null;
 };
 
 const inputCls =
@@ -174,7 +180,7 @@ export default async function AdminTokensPage({
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         {token.owner ? (
-                          `${token.owner.lastName}, ${token.owner.firstName}`
+                          surnameFirst(token.owner)
                         ) : (
                           <Dash />
                         )}
