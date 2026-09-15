@@ -51,9 +51,8 @@ type Role = {
       preferredFirstName?: string | null;
       lastName: string;
     };
-    credentialType: { id: number; name: string; key: string };
-    /** Everything they hold, so the badge can show their standing. */
-    credentials: Array<{ key: string; name: string; title: string | null }>;
+    /** The highest thing they hold that reaches this link. */
+    credential: { key: string; name: string; title: string | null };
     /** They hold something above the linked credential, not the link. */
     inherited: boolean;
   }>;
@@ -146,28 +145,30 @@ function ByCredential({ role }: { role: Role }) {
         <ul className="grid gap-1 sm:grid-cols-2">
           {holders.map((holder) => (
             <li
-              key={`${holder.member.id}-${holder.credentialType.id}`}
+              key={`${holder.member.id}-${holder.credential.key}`}
               className="flex flex-wrap items-center gap-2 text-sm"
             >
               <span>
                 {surnameFirst(holder.member)}
               </span>
-              {/* What they are, not the rung that matched: a Duty
-                  Supervisor shows as DS everywhere, and the abbreviations
-                  are written the way the agency writes them — D-T, not the
-                  D_T the database files it under. */}
-              {summarizeCredentials(
-                holder.credentials.map((credential) => ({
-                  type: { key: credential.key, name: credential.name },
-                  title: credential.title,
-                })),
-              ).map((badge) => (
+              {/* One badge, reading the same for everybody: the top of
+                  what they hold that reaches this link. Whether it is the
+                  linked credential itself or something above it is a fact
+                  about the ladder, not about the person, so it belongs in
+                  the tooltip rather than in how their name looks. */}
+              {summarizeCredentials([
+                {
+                  type: {
+                    key: holder.credential.key,
+                    name: holder.credential.name,
+                  },
+                  title: holder.credential.title,
+                },
+              ]).map((badge) => (
                 <Badge
                   key={badge.key}
                   variant="outline"
-                  className={`text-xs ${
-                    holder.inherited ? 'text-muted-foreground' : ''
-                  }`}
+                  className="text-xs"
                   title={
                     holder.inherited
                       ? `${badge.tooltip} — above the credential this role is linked to`
