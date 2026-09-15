@@ -1,4 +1,5 @@
 import { PERMISSION_INFO, groupPermissions } from '@/lib/permissions';
+import { summarizeCredentials } from '@/lib/credentials';
 import { surnameFirst } from '@/lib/name';
 import { api, ApiError } from '@/lib/api';
 import { formatDate } from '@/lib/format';
@@ -51,6 +52,8 @@ type Role = {
       lastName: string;
     };
     credentialType: { id: number; name: string; key: string };
+    /** Everything they hold, so the badge can show their standing. */
+    credentials: Array<{ key: string; name: string; title: string | null }>;
     /** They hold something above the linked credential, not the link. */
     inherited: boolean;
   }>;
@@ -149,19 +152,31 @@ function ByCredential({ role }: { role: Role }) {
               <span>
                 {surnameFirst(holder.member)}
               </span>
-              <Badge
-                variant="outline"
-                className={`text-xs ${
-                  holder.inherited ? 'text-muted-foreground' : ''
-                }`}
-                title={
-                  holder.inherited
-                    ? `Holds ${holder.credentialType.name}, which is above the linked credential`
-                    : holder.credentialType.name
-                }
-              >
-                {holder.credentialType.key}
-              </Badge>
+              {/* What they are, not the rung that matched: a Duty
+                  Supervisor shows as DS everywhere, and the abbreviations
+                  are written the way the agency writes them — D-T, not the
+                  D_T the database files it under. */}
+              {summarizeCredentials(
+                holder.credentials.map((credential) => ({
+                  type: { key: credential.key, name: credential.name },
+                  title: credential.title,
+                })),
+              ).map((badge) => (
+                <Badge
+                  key={badge.key}
+                  variant="outline"
+                  className={`text-xs ${
+                    holder.inherited ? 'text-muted-foreground' : ''
+                  }`}
+                  title={
+                    holder.inherited
+                      ? `${badge.tooltip} — above the credential this role is linked to`
+                      : badge.tooltip
+                  }
+                >
+                  {badge.label}
+                </Badge>
+              ))}
             </li>
           ))}
         </ul>
