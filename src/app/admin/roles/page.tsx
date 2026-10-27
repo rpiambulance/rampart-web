@@ -2,7 +2,7 @@ import { PERMISSION_INFO, groupPermissions } from '@/lib/permissions';
 import { summarizeCredentials } from '@/lib/credentials';
 import { surnameFirst } from '@/lib/name';
 import { api, ApiError } from '@/lib/api';
-import { formatDate } from '@/lib/format';
+import {  formatDateUTC } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,10 +17,12 @@ import { PageHeader } from '@/components/page-header';
 import {
   assignRole,
   createRole,
+  deleteAssignment,
   deleteRole,
   removeAssignment,
   updateRole,
 } from './actions';
+import { isBeforeToday } from '@/lib/utils';
 
 type Role = {
   id: number;
@@ -277,12 +279,13 @@ function RoleCard({
                     {surnameFirst(assignment.member)}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {formatDate(assignment.startDate)}
+                    {formatDateUTC(assignment.startDate)}
                     {' – '}
                     {assignment.endDate
-                      ? formatDate(assignment.endDate)
+                      ? formatDateUTC(assignment.endDate)
                       : 'present'}
                   </span>
+                  {(assignment.endDate == null || !isBeforeToday(assignment.endDate)) ? 
                   <form action={removeAssignment.bind(null, assignment.id)}>
                     <Button
                       type="submit"
@@ -290,9 +293,21 @@ function RoleCard({
                       size="sm"
                       className="h-6 px-2 text-xs text-destructive"
                     >
-                      remove
+                      unassign
                     </Button>
                   </form>
+                  :
+                  <form action={deleteAssignment.bind(null, assignment.id)}>
+                    <Button
+                      type="submit"
+                      variant="destructive"
+                      size="sm"
+                      className="h-6 px-2 text-xs text-destructive"
+                    >
+                      delete permanently
+                    </Button>
+                  </form>
+                  }
                 </li>
               ))}
             </ul>
