@@ -65,6 +65,17 @@ export async function deleteRole(roleId: number) {
 
 export async function removeAssignment(assignmentId: number) {
   try {
+    const date = new Date();
+    date.setDate(date.getDate() - 1); // Removing an assignment today means the last day (inclusive) was yesterday
+    await api(`/v1/roles/assignments/${assignmentId}`, { method: 'PATCH', body: JSON.stringify({ endDate: date.toDateString() }) });
+  } catch (error) {
+    redirect(`/admin/roles?error=${encodeURIComponent(apiErrorMessage(error))}`);
+  }
+  revalidatePath('/admin/roles');
+}
+
+export async function deleteAssignment(assignmentId: number) {
+  try {
     await api(`/v1/roles/assignments/${assignmentId}`, { method: 'DELETE' });
   } catch (error) {
     redirect(`/admin/roles?error=${encodeURIComponent(apiErrorMessage(error))}`);

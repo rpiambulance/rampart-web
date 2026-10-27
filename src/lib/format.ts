@@ -1,4 +1,4 @@
-const TZ = 'America/New_York';
+export const TZ = 'America/New_York';
 
 /**
  * Dates are written day-first with an abbreviated month and no comma:
@@ -35,6 +35,12 @@ export function formatDay(dateStr: string): string {
 /** "16 Aug 2026" from an ISO timestamp, in America/New_York. */
 export function formatDate(iso: string): string {
   return parts(new Date(iso), TZ, false, true);
+}
+
+
+/** "16 Aug 2026" from an ISO timestamp, in UTC. */
+export function formatDateUTC(iso: string): string {
+  return parts(new Date(iso), 'UTC', false, true);
 }
 
 /** "Sun 16 Aug" from an ISO timestamp, in America/New_York. */
