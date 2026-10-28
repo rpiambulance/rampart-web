@@ -80,6 +80,7 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       'promotions:vote',
       'promotions:captain-approve',
       'promotions:adjust-requirements',
+      'promotions:record-meeting',
       'trainings:manage',
     ],
   },
@@ -186,6 +187,8 @@ export const PERMISSION_INFO: Record<string, string> = {
   'promotions:captain-approve': 'Give the captain’s approval to a promotion',
   'promotions:adjust-requirements':
     'Waive or add a requirement for one candidate, and record why',
+  'promotions:record-meeting':
+    'Record a Training Committee vote taken in person, in place of the online vote',
   'trainings:manage':
     'Create annual trainings and classes, and record who attended',
 
