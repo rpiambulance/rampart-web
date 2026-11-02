@@ -58,6 +58,7 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       'certs:verify',
       'credentials:grant',
       'credentials:appoint',
+      'credentials:requirement-dates',
     ],
   },
   {
@@ -169,6 +170,8 @@ export const PERMISSION_INFO: Record<string, string> = {
     'Grant and suspend agency credentials — crew chief, driver, attendant',
   'credentials:appoint':
     'Make the appointments the ladder does not cover, from duty supervisor up to captain',
+  'credentials:requirement-dates':
+    'Set when credential requirements apply and what renews them — seasons, renewal cycles, class series (in Central)',
 
   // Evaluations & checklists
   'evals:write': 'Fill in an evaluation of another member',

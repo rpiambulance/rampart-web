@@ -11,7 +11,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { requirementImpact, setRequirementScope } from './actions';
-import { RequirementDateFields } from './requirement-dates';
 import { INPUT_CLS as inputCls, type Requirement } from './types';
 
 type Impact = Awaited<ReturnType<typeof requirementImpact>>;
@@ -66,9 +65,8 @@ export function RequirementScope({ req }: { req: Requirement }) {
           <PopoverDescription>
             At promotion means once, on the way up — tightening it later never
             reaches back. Ongoing means it is re-checked nightly and a lapse
-            suspends the credential, and every credential above it. Dates
-            make it seasonal (in force from/until) or renewing (counts if done
-            on or after, good through).
+            suspends the credential, and every credential above it. When it
+            applies — its season, or how it renews — is set in Central.
           </PopoverDescription>
         </PopoverHeader>
         <form action={setRequirementScope.bind(null, req.id)} className="grid gap-2">
@@ -82,8 +80,6 @@ export function RequirementScope({ req }: { req: Requirement }) {
               ))}
             </select>
           </label>
-          <RequirementDateFields req={req} />
-
           {loading ? (
             <p className="text-xs text-muted-foreground">Checking who this affects…</p>
           ) : impact && impact.members.length ? (

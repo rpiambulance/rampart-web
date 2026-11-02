@@ -140,23 +140,6 @@ export async function deactivateEventKind(id: number) {
 
 // ---- credential requirements ----
 
-/** The dates on a requirement that say when it applies and what counts. */
-const REQUIREMENT_DATES = [
-  'effectiveFrom',
-  'effectiveUntil',
-  'countsFrom',
-  'validThrough',
-] as const;
-
-/**
- * A date input's value as the API takes it — a date-only value, which the
- * API reads as the New York calendar day — or undefined when left blank.
- */
-function dateOnly(value: FormDataEntryValue | null): string | undefined {
-  const text = String(value ?? '').trim();
-  return text ? `${text}T00:00:00.000Z` : undefined;
-}
-
 /**
  * Move a requirement between "checked at promotion" and "checked forever".
  *
@@ -171,16 +154,7 @@ export async function setRequirementScope(
   try {
     await api(`/v1/credentials/requirements/${requirementId}`, {
       method: 'PATCH',
-      body: JSON.stringify({
-        scope,
-        // Every date is sent, blank as null, so clearing a field clears it.
-        ...Object.fromEntries(
-          REQUIREMENT_DATES.map((field) => [
-            field,
-            dateOnly(formData.get(field)) ?? null,
-          ]),
-        ),
-      }),
+      body: JSON.stringify({ scope }),
     });
     if (formData.get('grandfather') === 'on') {
       await api(`/v1/credentials/requirements/${requirementId}/grandfather`, {
@@ -215,10 +189,6 @@ export async function addRequirement(
     scope,
     ...(group ? { alternativeGroup: group } : {}),
   };
-  for (const field of REQUIREMENT_DATES) {
-    const value = dateOnly(formData.get(field));
-    if (value) body[field] = value;
-  }
   if (kind === 'CERTIFICATION') {
     body.certificationTypeId = Number(formData.get('certificationTypeId'));
   } else if (kind === 'EVALUATION_COUNT') {
@@ -229,11 +199,7 @@ export async function addRequirement(
     // unlike an evaluation requirement it carries no count.
     body.evalTemplateId = Number(formData.get('evalTemplateId'));
   } else if (kind === 'CLASS') {
-    // A series is any session of the class, this year's or next; one class
-    // is that session only. The series wins if both were picked.
-    const series = Number(formData.get('classSeriesId'));
-    if (series) body.classSeriesId = series;
-    else body.classId = Number(formData.get('classId'));
+    body.classId = Number(formData.get('classId'));
   }
   try {
     await api(`/v1/credentials/types/${credentialTypeId}/requirements`, {

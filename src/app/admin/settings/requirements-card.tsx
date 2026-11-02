@@ -8,12 +8,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { addRequirement, removeRequirement } from './actions';
-import { RequirementDateFields, requirementDatesSummary } from './requirement-dates';
+import { requirementDatesSummary } from './requirement-dates';
 import { RequirementScope } from './requirement-scope';
 import {
   INPUT_CLS as inputCls,
   type CertType,
-  type ClassSeries,
   type CredentialType,
   type EvalTemplate,
   type Requirement,
@@ -40,7 +39,15 @@ function RequirementText({ req }: { req: Requirement }) {
   return (
     <span>
       {requirementLabel(req)}
-      {dates ? <span className="text-xs text-muted-foreground"> · {dates}</span> : null}
+      {dates ? (
+        <span
+          className="text-xs text-muted-foreground"
+          title="Dates are set in Central, under Requirement Dates."
+        >
+          {' '}
+          · {dates}
+        </span>
+      ) : null}
     </span>
   );
 }
@@ -80,13 +87,11 @@ export function RequirementsCard({
   certTypes,
   evalTemplates,
   classes,
-  series,
 }: {
   credentialTypes: CredentialType[];
   certTypes: CertType[];
   evalTemplates: EvalTemplate[];
   classes: TrainingClass[];
-  series: ClassSeries[];
 }) {
   return (
     <Card>
@@ -98,11 +103,9 @@ export function RequirementsCard({
           A promotion requirement is checked once, on the way up, so adding one
           never reaches back and suspends somebody promoted under the old
           rules. An ongoing requirement is checked continuously and does
-          suspend — give it an in-force date so it only bites going forward,
-          and holders are reminded before it does. For something seasonal,
-          give it an end date too; for something that must be renewed, say
-          what counts (done on or after a date, good through a date) or pick
-          a class series, whose sessions last as long as the series says.
+          suspend. When a requirement applies — an in-force date, a season,
+          a renewal cycle, a class series — is set in Central, under
+          Requirement Dates.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -174,7 +177,6 @@ export function RequirementsCard({
                   <option value="BOTH">Both</option>
                 </select>
               </label>
-              <RequirementDateFields />
               <label className="grid gap-1 text-xs text-muted-foreground">
                 Either/or group (optional)
                 <input
@@ -227,23 +229,6 @@ export function RequirementsCard({
                   {classes.map((cls) => (
                     <option key={cls.id} value={cls.id}>
                       {cls.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="grid gap-1 text-xs text-muted-foreground">
-                or class series
-                <select
-                  name="classSeriesId"
-                  defaultValue=""
-                  title="Any session in the series counts, this year's or next — for a refresher."
-                  className={inputCls}
-                >
-                  <option value="">—</option>
-                  {series.map((one) => (
-                    <option key={one.id} value={one.id}>
-                      {one.name}
-                      {one.validityMonths ? ` (${one.validityMonths} mo)` : ''}
                     </option>
                   ))}
                 </select>

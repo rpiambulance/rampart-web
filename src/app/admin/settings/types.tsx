@@ -74,14 +74,6 @@ export type EvalTemplate = {
 
 export type TrainingClass = { id: number; name: string };
 
-/** Sessions of the same class over time; a requirement can name the series. */
-export type ClassSeries = {
-  id: number;
-  name: string;
-  validityMonths: number | null;
-  active?: boolean;
-};
-
 export const WEEKDAYS = [
   'Sunday',
   'Monday',
