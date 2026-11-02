@@ -6,6 +6,7 @@ import { RequirementsCard } from '../requirements-card';
 import {
   NoAccess,
   type CertType,
+  type ClassSeries,
   type CredentialType,
   type EvalTemplate,
   type RoleOption,
@@ -27,14 +28,16 @@ export default async function CredentialSettingsPage({
   let certTypes: CertType[];
   let evalTemplates: EvalTemplate[];
   let classes: TrainingClass[];
+  let series: ClassSeries[];
   let roles: RoleOption[];
   try {
-    [credentialTypes, certTypes, evalTemplates, classes, roles] =
+    [credentialTypes, certTypes, evalTemplates, classes, series, roles] =
       await Promise.all([
         api<CredentialType[]>('/v1/credentials/types'),
         api<CertType[]>('/v1/certifications/types'),
         api<EvalTemplate[]>('/v1/evals/templates'),
         api<TrainingClass[]>('/v1/trainings/classes'),
+        api<ClassSeries[]>('/v1/trainings/series'),
         api<RoleOption[]>('/v1/roles'),
       ]);
   } catch (err) {
@@ -54,6 +57,7 @@ export default async function CredentialSettingsPage({
         certTypes={certTypes}
         evalTemplates={evalTemplates}
         classes={classes}
+        series={series.filter((s) => s.active !== false)}
       />
       <LinkedRolesCard credentialTypes={credentialTypes} roles={roles} />
     </div>

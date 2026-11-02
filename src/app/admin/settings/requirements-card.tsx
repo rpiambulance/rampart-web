@@ -8,10 +8,12 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { addRequirement, removeRequirement } from './actions';
+import { RequirementDateFields, requirementDatesSummary } from './requirement-dates';
 import { RequirementScope } from './requirement-scope';
 import {
   INPUT_CLS as inputCls,
   type CertType,
+  type ClassSeries,
   type CredentialType,
   type EvalTemplate,
   type Requirement,
@@ -28,7 +30,19 @@ function requirementLabel(req: Requirement): string {
   if (req.kind === 'CHECKLIST') {
     return `Checklist: ${req.evalTemplate?.name ?? 'unknown'}`;
   }
+  if (req.classSeries) return `Any session of: ${req.classSeries.name}`;
   return `Class: ${req.class?.name ?? 'unknown'}`;
+}
+
+/** The requirement, with its dates after it when it has any. */
+function RequirementText({ req }: { req: Requirement }) {
+  const dates = requirementDatesSummary(req);
+  return (
+    <span>
+      {requirementLabel(req)}
+      {dates ? <span className="text-xs text-muted-foreground"> · {dates}</span> : null}
+    </span>
+  );
 }
 
 function RemoveRequirement({ id }: { id: number }) {
@@ -66,11 +80,13 @@ export function RequirementsCard({
   certTypes,
   evalTemplates,
   classes,
+  series,
 }: {
   credentialTypes: CredentialType[];
   certTypes: CertType[];
   evalTemplates: EvalTemplate[];
   classes: TrainingClass[];
+  series: ClassSeries[];
 }) {
   return (
     <Card>
@@ -82,7 +98,11 @@ export function RequirementsCard({
           A promotion requirement is checked once, on the way up, so adding one
           never reaches back and suspends somebody promoted under the old
           rules. An ongoing requirement is checked continuously and does
-          suspend — give it an in-force date so it only bites going forward.
+          suspend — give it an in-force date so it only bites going forward,
+          and holders are reminded before it does. For something seasonal,
+          give it an end date too; for something that must be renewed, say
+          what counts (done on or after a date, good through a date) or pick
+          a class series, whose sessions last as long as the series says.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -96,7 +116,7 @@ export function RequirementsCard({
               <ul className="space-y-1">
                 {groupedRequirements(type.requirements).standalone.map((req) => (
                   <li key={req.id} className="flex items-center gap-2 text-sm">
-                    <span>{requirementLabel(req)}</span>
+                    <RequirementText req={req} />
                     <RequirementScope req={req} />
                     <RemoveRequirement id={req.id} />
                   </li>
@@ -117,7 +137,7 @@ export function RequirementsCard({
                             key={req.id}
                             className="flex items-center gap-2 text-sm"
                           >
-                            <span>{requirementLabel(req)}</span>
+                            <RequirementText req={req} />
                             <RequirementScope req={req} />
                             <RemoveRequirement id={req.id} />
                           </li>
@@ -154,15 +174,7 @@ export function RequirementsCard({
                   <option value="BOTH">Both</option>
                 </select>
               </label>
-              <label className="grid gap-1 text-xs text-muted-foreground">
-                In force from (optional)
-                <input
-                  type="date"
-                  name="effectiveFrom"
-                  title="An ongoing requirement suspends nobody for anything before this date."
-                  className={inputCls}
-                />
-              </label>
+              <RequirementDateFields />
               <label className="grid gap-1 text-xs text-muted-foreground">
                 Either/or group (optional)
                 <input
@@ -215,6 +227,23 @@ export function RequirementsCard({
                   {classes.map((cls) => (
                     <option key={cls.id} value={cls.id}>
                       {cls.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="grid gap-1 text-xs text-muted-foreground">
+                or class series
+                <select
+                  name="classSeriesId"
+                  defaultValue=""
+                  title="Any session in the series counts, this year's or next — for a refresher."
+                  className={inputCls}
+                >
+                  <option value="">—</option>
+                  {series.map((one) => (
+                    <option key={one.id} value={one.id}>
+                      {one.name}
+                      {one.validityMonths ? ` (${one.validityMonths} mo)` : ''}
                     </option>
                   ))}
                 </select>

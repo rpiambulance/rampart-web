@@ -140,6 +140,23 @@ export async function deactivateEventKind(id: number) {
 
 // ---- credential requirements ----
 
+/** The dates on a requirement that say when it applies and what counts. */
+const REQUIREMENT_DATES = [
+  'effectiveFrom',
+  'effectiveUntil',
+  'countsFrom',
+  'validThrough',
+] as const;
+
+/**
+ * A date input's value as the API takes it — a date-only value, which the
+ * API reads as the New York calendar day — or undefined when left blank.
+ */
+function dateOnly(value: FormDataEntryValue | null): string | undefined {
+  const text = String(value ?? '').trim();
+  return text ? `${text}T00:00:00.000Z` : undefined;
+}
+
 /**
  * Move a requirement between "checked at promotion" and "checked forever".
  *
@@ -151,13 +168,18 @@ export async function setRequirementScope(
   formData: FormData,
 ) {
   const scope = String(formData.get('scope') ?? '');
-  const effectiveFrom = String(formData.get('effectiveFrom') ?? '').trim();
   try {
     await api(`/v1/credentials/requirements/${requirementId}`, {
       method: 'PATCH',
       body: JSON.stringify({
         scope,
-        effectiveFrom: effectiveFrom ? `${effectiveFrom}T00:00:00.000Z` : null,
+        // Every date is sent, blank as null, so clearing a field clears it.
+        ...Object.fromEntries(
+          REQUIREMENT_DATES.map((field) => [
+            field,
+            dateOnly(formData.get(field)) ?? null,
+          ]),
+        ),
       }),
     });
     if (formData.get('grandfather') === 'on') {
@@ -171,11 +193,12 @@ export async function setRequirementScope(
   revalidatePath('/admin/settings/credentials');
 }
 
-/** Who the requirement would suspend today, for the confirmation step. */
+/** Who the requirement would suspend once it applies, for the confirmation step. */
 export async function requirementImpact(requirementId: number) {
   return api<{
-    enforceable: boolean;
-    certificationType: string | null;
+    requirement: string;
+    /** The day it is judged on: today, or the day it takes effect. */
+    asOf: string;
     members: Array<{ id: number; name: string; reason: string }>;
   }>(`/v1/credentials/requirements/${requirementId}/impact`);
 }
@@ -187,14 +210,15 @@ export async function addRequirement(
   const kind = String(formData.get('kind') ?? '');
   const group = String(formData.get('alternativeGroup') ?? '').trim();
   const scope = String(formData.get('scope') ?? 'PROMOTION');
-  const effectiveFrom = String(formData.get('effectiveFrom') ?? '').trim();
   const body: Record<string, unknown> = {
     kind,
     scope,
     ...(group ? { alternativeGroup: group } : {}),
-    // A date-only value; the API reads it as the New York calendar day.
-    ...(effectiveFrom ? { effectiveFrom: `${effectiveFrom}T00:00:00.000Z` } : {}),
   };
+  for (const field of REQUIREMENT_DATES) {
+    const value = dateOnly(formData.get(field));
+    if (value) body[field] = value;
+  }
   if (kind === 'CERTIFICATION') {
     body.certificationTypeId = Number(formData.get('certificationTypeId'));
   } else if (kind === 'EVALUATION_COUNT') {
@@ -205,7 +229,11 @@ export async function addRequirement(
     // unlike an evaluation requirement it carries no count.
     body.evalTemplateId = Number(formData.get('evalTemplateId'));
   } else if (kind === 'CLASS') {
-    body.classId = Number(formData.get('classId'));
+    // A series is any session of the class, this year's or next; one class
+    // is that session only. The series wins if both were picked.
+    const series = Number(formData.get('classSeriesId'));
+    if (series) body.classSeriesId = series;
+    else body.classId = Number(formData.get('classId'));
   }
   try {
     await api(`/v1/credentials/types/${credentialTypeId}/requirements`, {

@@ -39,6 +39,12 @@ export type Requirement = {
   /** Checked at promotion, continuously, or both. */
   scope?: 'PROMOTION' | 'ONGOING' | 'BOTH';
   effectiveFrom?: string | null;
+  /** The last day it applies — the end of a season. */
+  effectiveUntil?: string | null;
+  /** Only what was done on or after this date counts. */
+  countsFrom?: string | null;
+  /** Nothing counts past this date — the end of a renewal cycle. */
+  validThrough?: string | null;
   kind: 'CERTIFICATION' | 'EVALUATION_COUNT' | 'CLASS' | 'CHECKLIST';
   /** Requirements sharing a label are alternatives: any one of them will do. */
   alternativeGroup: string | null;
@@ -46,6 +52,7 @@ export type Requirement = {
   certificationType: { id: number; name: string } | null;
   evalTemplate: { id: number; name: string } | null;
   class: { id: number; name: string } | null;
+  classSeries?: { id: number; name: string; validityMonths: number | null } | null;
 };
 
 export type CredentialType = {
@@ -66,6 +73,14 @@ export type EvalTemplate = {
 };
 
 export type TrainingClass = { id: number; name: string };
+
+/** Sessions of the same class over time; a requirement can name the series. */
+export type ClassSeries = {
+  id: number;
+  name: string;
+  validityMonths: number | null;
+  active?: boolean;
+};
 
 export const WEEKDAYS = [
   'Sunday',

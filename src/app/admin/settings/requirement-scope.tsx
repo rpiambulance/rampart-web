@@ -11,9 +11,14 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { requirementImpact, setRequirementScope } from './actions';
+import { RequirementDateFields } from './requirement-dates';
 import { INPUT_CLS as inputCls, type Requirement } from './types';
 
 type Impact = Awaited<ReturnType<typeof requirementImpact>>;
+
+/** Today in New York, as the API dates things. */
+const today = () =>
+  new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
 
 const SCOPE_LABEL: Record<string, string> = {
   PROMOTION: 'At promotion only',
@@ -61,7 +66,9 @@ export function RequirementScope({ req }: { req: Requirement }) {
           <PopoverDescription>
             At promotion means once, on the way up — tightening it later never
             reaches back. Ongoing means it is re-checked nightly and a lapse
-            suspends the credential.
+            suspends the credential, and every credential above it. Dates
+            make it seasonal (in force from/until) or renewing (counts if done
+            on or after, good through).
           </PopoverDescription>
         </PopoverHeader>
         <form action={setRequirementScope.bind(null, req.id)} className="grid gap-2">
@@ -75,27 +82,17 @@ export function RequirementScope({ req }: { req: Requirement }) {
               ))}
             </select>
           </label>
-          <label className="grid gap-1 text-xs text-muted-foreground">
-            In force from (optional)
-            <input
-              type="date"
-              name="effectiveFrom"
-              defaultValue={req.effectiveFrom?.slice(0, 10) ?? ''}
-              className={inputCls}
-            />
-          </label>
+          <RequirementDateFields req={req} />
 
           {loading ? (
             <p className="text-xs text-muted-foreground">Checking who this affects…</p>
-          ) : impact && !impact.enforceable ? (
-            <p className="text-xs text-muted-foreground">
-              Only certification requirements can be checked on an ongoing
-              basis — nothing else expires on its own.
-            </p>
           ) : impact && impact.members.length ? (
             <div className="grid gap-1 rounded border border-destructive/40 p-2">
               <p className="text-xs font-medium text-destructive">
-                Made ongoing today, this would suspend {impact.members.length}{' '}
+                {impact.asOf > today()
+                  ? `Ongoing from ${impact.asOf}, this would suspend`
+                  : 'Made ongoing today, this would suspend'}{' '}
+                {impact.members.length}{' '}
                 {impact.members.length === 1 ? 'member' : 'members'}:
               </p>
               <ul className="max-h-32 overflow-auto text-xs text-muted-foreground">
@@ -106,14 +103,22 @@ export function RequirementScope({ req }: { req: Requirement }) {
                 ))}
               </ul>
               <label className="flex items-center gap-2 text-xs">
-                <input type="checkbox" name="grandfather" defaultChecked />
+                {/* Ticked when this is what turns it ongoing — the people
+                    caught are then the ones who never had to meet it. Not
+                    when it already is: a new season's dates would otherwise
+                    excuse everybody who has not done this season's. */}
+                <input
+                  type="checkbox"
+                  name="grandfather"
+                  defaultChecked={scope === 'PROMOTION'}
+                />
                 Excuse these members, so the rule only applies going forward
               </label>
             </div>
           ) : impact ? (
             <p className="text-xs text-muted-foreground">
-              Everybody holding this credential already meets it, so making it
-              ongoing suspends nobody today.
+              Everybody it reaches already meets it, so making it ongoing
+              suspends nobody{impact.asOf > today() ? ` on ${impact.asOf}` : ' today'}.
             </p>
           ) : null}
 
