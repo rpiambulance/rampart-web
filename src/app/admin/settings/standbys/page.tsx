@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { api, ApiError } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import {
@@ -61,9 +62,11 @@ export default async function StandbySetupPage({
       ) : null}
 
       <p className="text-sm text-muted-foreground">
-        The places themselves — and the spots inside them — are edited on
-        Places in Central, because they serve events and run numbers as well
-        as standbys.
+        The places themselves — and the spots inside them — are edited on{' '}
+        <Link href="/admin/settings/places" className="underline underline-offset-2">
+          Places
+        </Link>
+        , because they serve events and run numbers as well as standbys.
       </p>
 
       <Card>
