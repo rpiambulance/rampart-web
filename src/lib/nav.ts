@@ -75,6 +75,11 @@ export const NAV_GROUPS: NavGroup[] = [
         label: 'Events',
         permissions: ['settings:write'],
       },
+      {
+        href: '/admin/settings/standbys',
+        label: 'Standbys',
+        permissions: ['settings:write'],
+      },
     ],
   },
 ];
